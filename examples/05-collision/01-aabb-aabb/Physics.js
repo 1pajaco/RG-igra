@@ -2,12 +2,12 @@ import { vec3, mat4 } from 'glm';
 import { getGlobalModelMatrix } from 'engine/core/SceneUtils.js';
 import { Transform } from 'engine/core/core.js';
 
-export class Physics {
-
+export class Physics { 
+    
     constructor(scene) {
         this.scene = scene;
     }
-
+    
     update(t, dt) {
         for (const entity of this.scene) {
             if (entity.customProperties?.isDynamic) {
