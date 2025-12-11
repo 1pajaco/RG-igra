@@ -2,10 +2,11 @@ import { ResizeSystem } from 'engine/systems/ResizeSystem.js';
 import { UpdateSystem } from 'engine/systems/UpdateSystem.js';
 
 import { GLTFLoader } from 'engine/loaders/GLTFLoader.js';
+import { OBJLoader } from 'engine/loaders/OBJLoader.js';
 import { UnlitRenderer } from 'engine/renderers/UnlitRenderer.js';
 import { FirstPersonController } from 'engine/controllers/FirstPersonController.js';
 
-import { Camera, Model } from 'engine/core/core.js';
+import { Camera, Model, Entity, Transform, Primitive, Material, Texture, Sampler } from 'engine/core/core.js';
 
 import {
     calculateAxisAlignedBoundingBox,
@@ -21,6 +22,37 @@ await renderer.initialize();
 const loader = new GLTFLoader();
 await loader.load(new URL('./scene/scene/scene.gltf', import.meta.url));
 
+const objLoader = new OBJLoader();
+const monkeyMesh = await objLoader.load(new URL('./monkey.obj', import.meta.url));
+import { loadResources } from 'engine/loaders/resources.js';
+import { MonkeController } from '../../../engine/controllers/MonkeController.js';
+const resources = await loadResources({
+    'mesh': new URL('../../../models/floor/floor.json', import.meta.url),
+    'image': new URL('../../../models/floor/grass.png', import.meta.url),
+});
+
+const defaultTexture = new Texture({
+                    image: resources.image,
+                    sampler: new Sampler({
+                        minFilter: 'nearest',
+                        magFilter: 'nearest',
+                        addressModeU: 'repeat',
+                        addressModeV: 'repeat',
+                    }),
+
+});
+const defaultMaterial = new Material({ baseTexture: defaultTexture });
+const monkeyPrimitive = new Primitive({ mesh: monkeyMesh, material: defaultMaterial });
+const monkeyModel = new Model({ primitives: [monkeyPrimitive] });
+
+
+const monkeyEntity = new Entity(); 
+monkeyEntity.name = 'MonkeyObstacle';
+monkeyEntity.addComponent(new Transform({ translation: [0, 1.5, 0], scale: [0.5, 0.5, 0.5], rotation: [0, 0.707, 0, 0.707] }));
+monkeyEntity.addComponent(monkeyModel);
+monkeyEntity.addComponent(new MonkeController(monkeyEntity, canvas));
+monkeyEntity.customProperties = { isStatic: true };
+
 const scene = loader.loadScene();
 const camera = loader.loadNode('Camera');
 camera.addComponent(new FirstPersonController(camera, canvas));
@@ -29,12 +61,15 @@ camera.aabb = {
     max: [0.2, 0.2, 0.2],
 };
 
+scene.push(monkeyEntity);
+
 const physics = new Physics(scene);
 for (const entity of scene) {
     const model = entity.getComponentOfType(Model);
     if (!model) {
         continue;
     }
+    console.log(entity)
 
     const boxes = model.primitives.map(primitive => calculateAxisAlignedBoundingBox(primitive.mesh));
     entity.aabb = mergeAxisAlignedBoundingBoxes(boxes);
