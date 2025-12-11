@@ -1,7 +1,7 @@
 ﻿# RG-igra
 Rok is here.
 
-Treba naredit:
+TODO:
 - third person camera,
 - adding objects,
 - creating play enviroment,
@@ -9,3 +9,4 @@ Treba naredit:
 - do Phong shading model
 - made "custom" play enviroment ✅
 - ...
+
