@@ -68,10 +68,10 @@ scene.push(monkeyEntity);
 const physics = new Physics(scene);
 for (const entity of scene) {
     const model = entity.getComponentOfType(Model);
+    console.log(entity)
     if (!model) {
         continue;
     }
-    console.log(entity)
 
     const boxes = model.primitives.map(primitive => calculateAxisAlignedBoundingBox(primitive.mesh));
     entity.aabb = mergeAxisAlignedBoundingBoxes(boxes);
