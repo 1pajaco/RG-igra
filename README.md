@@ -2,7 +2,7 @@
 Rok is here.
 
 TODO:
-- third person camera,
+- third person camera, 🚧
 - adding objects, ✅
 - creating play enviroment,
 - figure out what puzzles,
