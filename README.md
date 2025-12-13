@@ -1,14 +1,10 @@
 ﻿# RG-igra
-Rok is here.
 
 TODO:
-- third person camera, 🚧
-- adding objects, ✅
-- implement gravity,
-- implement jumping with spacebar,
-- creating play enviroment,
+- third person camera, ✅
+- implement jumping with spacebar ~ with player gravity,
+- create custom play enviroment with new models,
+- do Phong shading/lighting model,
 - figure out what puzzles,
-- do Phong shading model
-- made "custom" play enviroment ✅
 - ...
 
