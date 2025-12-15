@@ -446,6 +446,11 @@ export class GLTFLoader {
 
         const entity = new Entity();
 
+        if (gltfSpec.name) {
+            entity.name = gltfSpec.name;
+        }
+
+
         entity.addComponent(new Transform(gltfSpec));
 
         if (gltfSpec.children) {
