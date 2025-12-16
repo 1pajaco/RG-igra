@@ -1,0 +1,11 @@
+Model Information:
+* title:	Cartoon Chicken
+* source:	https://sketchfab.com/3d-models/cartoon-chicken-465519acf2ad43209055b3b6e8787849
+* author:	BaraV (https://sketchfab.com/BaraV)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Cartoon Chicken" (https://sketchfab.com/3d-models/cartoon-chicken-465519acf2ad43209055b3b6e8787849) by BaraV (https://sketchfab.com/BaraV) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

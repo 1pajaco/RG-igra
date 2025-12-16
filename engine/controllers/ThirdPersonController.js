@@ -13,7 +13,8 @@ export class ThirdPersonController {
         maxSpeed = 5,
         decay = 0.99999,
         pointerSensitivity = 0.002,
-        cameraOffset = [0, 1.5, 4],
+        cameraOffset = [0, 2.5, 4],
+        pitchOffset = -0.4,
 
     } = {}) {
         this.entity = entity;
@@ -33,6 +34,7 @@ export class ThirdPersonController {
 
         this.initialYawOffset = initialYawOffset;
         this.cameraOffset = cameraOffset;
+        this.pitchOffset = pitchOffset;
 
         this.initHandlers();
     }
@@ -115,7 +117,7 @@ export class ThirdPersonController {
             
             const cameraRotation = quat.create();
             quat.rotateY(cameraRotation, cameraRotation, currentYaw);
-            quat.rotateX(cameraRotation, cameraRotation, this.pitch);
+            quat.rotateX(cameraRotation, cameraRotation, this.pitch + this.pitchOffset);
 
             transformEntity.rotation = entityRotation;
 
