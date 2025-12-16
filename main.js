@@ -54,6 +54,7 @@ await loader.load(new URL('./test/scene.gltf', import.meta.url));
 
 const scene = loader.loadScene();
 const camera = loader.loadNode('Camera');
+// camera.removeComponentsOfType(isDynamic)
 camera.aabb = {
     min: [-0.2, -0.2, -0.2],
     max: [0.2, 0.2, 0.2],
@@ -61,11 +62,11 @@ camera.aabb = {
 
 const chickenEntity = loader.loadNode('Object_218');
 const transform = chickenEntity.getComponentOfType(Transform);
-transform.translation = [5, 0.0, -5];
+transform.translation = [5, 10, -5];
 
-camera.addComponent(new ThirdPersonController(chickenEntity, camera, canvas));
+chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canvas));
 // scene.push(monkeyEntity);
-scene.push(chickenEntity);
+// scene.push(chickenEntity);
 
 const physics = new Physics(scene);
 
