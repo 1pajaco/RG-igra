@@ -10,6 +10,9 @@ export class Physics {
     }
 
     update(t, dt) {
+        const uiElement = document.getElementById('interaction-ui');
+        if (uiElement) uiElement.style.display = 'none';
+
         for (const entity of this.scene) {
             const controller = entity.getComponentOfType(ThirdPersonController)
             if (!controller) {
@@ -26,6 +29,10 @@ export class Physics {
                 for (const other of this.scene) {
                     if (entity !== other && other.customProperties?.isStatic) {
                         this.resolveCollision(entity, other, controller);
+                    }
+
+                    if (entity !== other && other.customProperties?.isTrigger) {
+                        this.checkTrigger(entity, other, controller);
                     }
                 }
             }
@@ -133,6 +140,27 @@ export class Physics {
         }
 
         vec3.add(transform.translation, transform.translation, minDirection);
+    }
+
+    checkTrigger(player, trigger, controller) {
+        const playerBox = this.getTransformedAABB(player);
+        const triggerBox = this.getTransformedAABB(trigger);
+
+        const isColliding = this.aabbIntersection(playerBox, triggerBox);
+        if (!isColliding) {
+            return
+        }
+        const uiElement = document.getElementById('interaction-ui');
+        if (uiElement) {
+            uiElement.style.display = 'block';
+        }
+        if (controller.keys['KeyE']) {
+            const index = this.scene.indexOf(trigger);
+            if (index > -1) {
+                this.scene.splice(index, 1);
+            }
+            console.log("Good job you pecked the box!");
+        }
     }
 
 }

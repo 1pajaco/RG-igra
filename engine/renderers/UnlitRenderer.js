@@ -189,6 +189,9 @@ export class UnlitRenderer extends BaseRenderer {
         this.renderPass.setBindGroup(0, cameraBindGroup);
 
         for (const entity of entities) {
+            if(entity.customProperties?.isTrigger){
+                continue;
+            }
             this.renderEntity(entity);
         }
 
