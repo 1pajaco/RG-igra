@@ -31,7 +31,8 @@
 				17,
 				18,
 				19,
-				20
+				20,
+				21
 			]
 		}
 	],
@@ -150,7 +151,7 @@
 				0.7071067094802856
 			],
 			"scale":[
-				2.5599989891052246,
+				2.5599987506866455,
 				1,
 				1
 			],
@@ -196,7 +197,7 @@
 				0.7071067094802856
 			],
 			"scale":[
-				2.469999074935913,
+				2.469998836517334,
 				1,
 				1
 			],
@@ -355,14 +356,26 @@
 				0.816496729850769
 			],
 			"scale":[
-				0.2499999850988388,
 				0.2499999701976776,
-				0.2499999850988388
+				0.2499999701976776,
+				0.2499999701976776
 			],
 			"translation":[
 				14.621820449829102,
 				1.1047210693359375,
 				4.254980564117432
+			]
+		},
+		{
+			"extras":{
+				"isStatic":true
+			},
+			"mesh":16,
+			"name":"Box.013",
+			"translation":[
+				9.574152946472168,
+				1.000000238418579,
+				-15.75946044921875
 			]
 		}
 	],
@@ -563,6 +576,17 @@
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":15
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		},
+		{
+			"doubleSided":true,
+			"name":"Box.009",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":16
 				},
 				"metallicFactor":0,
 				"roughnessFactor":0.5
@@ -793,6 +817,20 @@
 					"material":15
 				}
 			]
+		},
+		{
+			"name":"Box.009",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":51,
+						"NORMAL":52,
+						"TEXCOORD_0":53
+					},
+					"indices":7,
+					"material":16
+				}
+			]
 		}
 	],
 	"textures":[
@@ -855,6 +893,10 @@
 		{
 			"sampler":1,
 			"source":5
+		},
+		{
+			"sampler":0,
+			"source":1
 		},
 		{
 			"sampler":0,
@@ -1359,6 +1401,34 @@
 			"componentType":5126,
 			"count":24,
 			"type":"VEC2"
+		},
+		{
+			"bufferView":51,
+			"componentType":5126,
+			"count":24,
+			"max":[
+				1,
+				1,
+				1
+			],
+			"min":[
+				-1,
+				-1,
+				-1
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":52,
+			"componentType":5126,
+			"count":24,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":53,
+			"componentType":5126,
+			"count":24,
+			"type":"VEC2"
 		}
 	],
 	"bufferViews":[
@@ -1667,6 +1737,24 @@
 			"byteLength":192,
 			"byteOffset":284216,
 			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":288,
+			"byteOffset":284408,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":288,
+			"byteOffset":284696,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":192,
+			"byteOffset":284984,
+			"target":34962
 		}
 	],
 	"samplers":[
@@ -1681,7 +1769,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":284408,
+			"byteLength":285176,
 			"uri":"scene.bin"
 		}
 	]
