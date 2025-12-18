@@ -486,8 +486,22 @@ export class GLTFLoader {
         }
 
         const scene = [];
+        const traverse = (nodeIndex) => {
+            const entity = this.loadNode(nodeIndex);
+            scene.push(entity);
+
+            const nodeSpec = this.gltf.nodes[nodeIndex];
+            if (nodeSpec.children) {
+                for (const childIndex of nodeSpec.children) {
+                    traverse(childIndex);
+                }
+            }
+        };
+
         if (gltfSpec.nodes) {
-            scene.push(...gltfSpec.nodes.map(nodeIndex => this.loadNode(nodeIndex)));
+            for (const nodeIndex of gltfSpec.nodes) {
+                traverse(nodeIndex);
+            }
         }
 
         this.cache.set(gltfSpec, scene);

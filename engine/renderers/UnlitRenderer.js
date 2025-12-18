@@ -1,8 +1,9 @@
 import { mat4 } from 'glm';
 
 import * as WebGPU from '../WebGPU.js';
+import * as SceneUtils from '../core/SceneUtils.js';
 
-import { Camera, Model } from '../core/core.js';
+import { Camera, Model, Parent } from '../core/core.js';
 
 import {
     getLocalModelMatrix,
@@ -48,7 +49,7 @@ export class UnlitRenderer extends BaseRenderer {
             layout: 'auto',
             vertex: {
                 module,
-                buffers: [ vertexBufferLayout ],
+                buffers: [vertexBufferLayout],
             },
             fragment: {
                 module,
@@ -189,9 +190,15 @@ export class UnlitRenderer extends BaseRenderer {
         this.renderPass.setBindGroup(0, cameraBindGroup);
 
         for (const entity of entities) {
-            if(entity.customProperties?.isTrigger){
+            if (entity.customProperties?.isTrigger) {
                 continue;
             }
+
+            const parent = entity.getComponentOfType(Parent);
+            if (parent && parent.entity?.customProperties?.used && SceneUtils.isTriggerRecursive(entity)) {
+                continue;
+            }
+
             this.renderEntity(entity);
         }
 

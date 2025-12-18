@@ -30,7 +30,6 @@
 				16,
 				17,
 				18,
-				19,
 				20,
 				21
 			]
@@ -151,7 +150,7 @@
 				0.7071067094802856
 			],
 			"scale":[
-				2.5599987506866455,
+				2.5599985122680664,
 				1,
 				1
 			],
@@ -197,7 +196,7 @@
 				0.7071067094802856
 			],
 			"scale":[
-				2.469998836517334,
+				2.469998598098755,
 				1,
 				1
 			],
@@ -333,21 +332,9 @@
 		},
 		{
 			"extras":{
-				"isTrigger":true
-			},
-			"mesh":14,
-			"name":"TriggerTest",
-			"translation":[
-				14.613083839416504,
-				1.000000238418579,
-				4.254980564117432
-			]
-		},
-		{
-			"extras":{
 				"isStatic":true
 			},
-			"mesh":15,
+			"mesh":14,
 			"name":"Box.012",
 			"rotation":[
 				0.40824830532073975,
@@ -361,8 +348,23 @@
 				0.2499999701976776
 			],
 			"translation":[
-				14.621820449829102,
-				1.1047210693359375,
+				0.008736610412597656,
+				0.1047208309173584,
+				0
+			]
+		},
+		{
+			"children":[
+				19
+			],
+			"extras":{
+				"isTrigger":true
+			},
+			"mesh":15,
+			"name":"TriggerTest",
+			"translation":[
+				14.613083839416504,
+				1.000000238418579,
 				4.254980564117432
 			]
 		},
@@ -550,6 +552,17 @@
 			}
 		},
 		{
+			"doubleSided":true,
+			"name":"Box.008",
+			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":14
+				},
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		},
+		{
 			"alphaMode":"BLEND",
 			"doubleSided":true,
 			"extras":{
@@ -563,17 +576,6 @@
 					1,
 					0.1812688708305359
 				],
-				"baseColorTexture":{
-					"index":14
-				},
-				"metallicFactor":0,
-				"roughnessFactor":0.5
-			}
-		},
-		{
-			"doubleSided":true,
-			"name":"Box.008",
-			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":15
 				},
@@ -791,7 +793,10 @@
 			]
 		},
 		{
-			"name":"TriggerTest",
+			"extras":{
+				"isStatic":true
+			},
+			"name":"Box.008",
 			"primitives":[
 				{
 					"attributes":{
@@ -805,7 +810,11 @@
 			]
 		},
 		{
-			"name":"Box.008",
+			"extras":{
+				"isTrigger":true,
+				"used":false
+			},
+			"name":"TriggerTest",
 			"primitives":[
 				{
 					"attributes":{
@@ -891,12 +900,12 @@
 			"source":1
 		},
 		{
-			"sampler":1,
-			"source":5
-		},
-		{
 			"sampler":0,
 			"source":1
+		},
+		{
+			"sampler":1,
+			"source":5
 		},
 		{
 			"sampler":0,

@@ -1,8 +1,8 @@
 import { vec3, mat4 } from 'glm';
 import { getGlobalModelMatrix } from 'engine/core/SceneUtils.js';
-import { Transform } from 'engine/core/core.js';
+import { Transform, Parent } from 'engine/core/core.js';
 import { ThirdPersonController } from './engine/controllers/ThirdPersonController.js';
-
+import { isTriggerRecursive } from './engine/core/SceneUtils.js';
 export class Physics {
 
     constructor(scene) {
@@ -11,13 +11,15 @@ export class Physics {
 
     update(t, dt) {
         const uiElement = document.getElementById('interaction-ui');
-        if (uiElement) uiElement.style.display = 'none';
-
+        if (uiElement) {
+            uiElement.style.display = 'none';
+        }
         for (const entity of this.scene) {
             const controller = entity.getComponentOfType(ThirdPersonController)
             if (!controller) {
                 continue;
             }
+
             if (entity.customProperties?.isDynamic) {
                 let transform = entity.getComponentOfType(Transform);
                 if (transform) {
@@ -27,13 +29,13 @@ export class Physics {
 
                 controller.onGround = false;
                 for (const other of this.scene) {
+                    if (entity !== other && isTriggerRecursive(other)) {
+                        this.checkTrigger(entity, other, controller, uiElement);
+                    }
                     if (entity !== other && other.customProperties?.isStatic) {
                         this.resolveCollision(entity, other, controller);
                     }
 
-                    if (entity !== other && other.customProperties?.isTrigger) {
-                        this.checkTrigger(entity, other, controller);
-                    }
                 }
             }
         }
@@ -142,7 +144,7 @@ export class Physics {
         vec3.add(transform.translation, transform.translation, minDirection);
     }
 
-    checkTrigger(player, trigger, controller) {
+    checkTrigger(player, trigger, controller, uiElement) {
         const playerBox = this.getTransformedAABB(player);
         const triggerBox = this.getTransformedAABB(trigger);
 
@@ -150,17 +152,25 @@ export class Physics {
         if (!isColliding) {
             return
         }
-        const uiElement = document.getElementById('interaction-ui');
-        if (uiElement) {
-            uiElement.style.display = 'block';
-        }
-        if (controller.keys['KeyE']) {
-            const index = this.scene.indexOf(trigger);
-            if (index > -1) {
-                this.scene.splice(index, 1);
+        if (!trigger.customProperties.used) {
+            if (uiElement) {
+                uiElement.style.display = 'block';
             }
-            console.log("Good job you pecked the box!");
+
+            if (controller.keys['KeyE']) {
+                trigger.customProperties.used = true;
+                uiElement.style.display = 'none';
+                for (const entity of this.scene) {
+                    const parent = entity.getComponentOfType(Parent);
+                    if (parent && parent.entity === trigger) {
+                        entity.customProperties.isStatic = false;
+                    }
+                }
+                console.log("Good job you pecked the box and it vanished!");
+            }
         }
+
+
     }
 
 }
