@@ -33,6 +33,14 @@ export class GLTFLoader {
         this.defaultScene = this.gltf.scene ?? 0;
         this.cache = new Map();
 
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, 1, 1);
+        this.whiteImage = await createImageBitmap(canvas);
+
         await Promise.all(this.gltf.buffers?.map(buffer => this.preloadBuffer(buffer)) ?? []);
         await Promise.all(this.gltf.images?.map(image => this.preloadImage(image)) ?? []);
 
@@ -49,12 +57,12 @@ export class GLTFLoader {
         }
     }
 
-    fetchJson(url) {
+    async fetchJson(url) {
         return fetch(url)
             .then(response => response.json());
     }
 
-    fetchBuffer(url) {
+    async fetchBuffer(url) {
         return fetch(url)
             .then(response => response.arrayBuffer());
     }
@@ -170,7 +178,10 @@ export class GLTFLoader {
     loadTexture(nameOrIndex) {
         const gltfSpec = this.findByNameOrIndex(this.gltf.textures, nameOrIndex);
         if (!gltfSpec) {
-            return null;
+            return new Texture({
+                image: this.whiteImage,
+                sampler: new Sampler()
+            });
         }
         if (this.cache.has(gltfSpec)) {
             return this.cache.get(gltfSpec);
@@ -178,7 +189,10 @@ export class GLTFLoader {
 
         const options = {};
         if (gltfSpec.source !== undefined) {
-            options.image = this.loadImage(gltfSpec.source);
+            const img = this.loadImage(gltfSpec.source);
+            options.image = img ?? this.whiteImage;
+        } else {
+            options.image = this.whiteImage;
         }
         if (gltfSpec.sampler !== undefined) {
             options.sampler = this.loadSampler(gltfSpec.sampler);
@@ -233,6 +247,7 @@ export class GLTFLoader {
             options.occlusionFactor = gltfSpec.occlusionTexture.strength;
         }
 
+        options.baseTexture = options.baseTexture ?? this.loadTexture();    
         const material = new Material(options);
 
         this.cache.set(gltfSpec, material);
@@ -486,8 +501,22 @@ export class GLTFLoader {
         }
 
         const scene = [];
+        const traverse = (nodeIndex) => {
+            const entity = this.loadNode(nodeIndex);
+            scene.push(entity);
+
+            const nodeSpec = this.gltf.nodes[nodeIndex];
+            if (nodeSpec.children) {
+                for (const childIndex of nodeSpec.children) {
+                    traverse(childIndex);
+                }
+            }
+        };
+
         if (gltfSpec.nodes) {
-            scene.push(...gltfSpec.nodes.map(nodeIndex => this.loadNode(nodeIndex)));
+            for (const nodeIndex of gltfSpec.nodes) {
+                traverse(nodeIndex);
+            }
         }
 
         this.cache.set(gltfSpec, scene);

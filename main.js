@@ -24,37 +24,10 @@ const renderer = new UnlitRenderer(canvas);
 await renderer.initialize();
 
 const loader = new GLTFLoader();
-await loader.load(new URL('./test/scene.gltf', import.meta.url));
-
-// const objLoader = new OBJLoader();
-// const monkeyMesh = await objLoader.load(new URL('../../../models/monkey/monkey.obj', import.meta.url));
-// import { loadResources } from 'engine/loaders/resources.js';
-// const resources = await loadResources({
-//     'mesh': new URL('../../../models/monkey/monkey.json', import.meta.url),
-//     'image': new URL('../../../models/monkey/normal.webp', import.meta.url),
-// });
-// const defaultTexture = new Texture({
-//     image: resources.image,
-//     sampler: new Sampler({
-//         // minFilter: 'nearest',
-//         // magFilter: 'nearest',
-//         // addressModeU: 'repeat',
-//         // addressModeV: 'repeat',
-//     }),
-
-// });
-// const defaultMaterial = new Material({ baseTexture: defaultTexture });
-// const monkeyPrimitive = new Primitive({ mesh: monkeyMesh, material: defaultMaterial });
-// const monkeyModel = new Model({ primitives: [monkeyPrimitive] });
-// const monkeyEntity = new Entity();
-// monkeyEntity.name = 'MonkeyObstacle';
-// monkeyEntity.addComponent(new Transform({ translation: [0, 0.5, 0], scale: [0.5, 0.5, 0.5], rotation: [0, 0, 0, 0] }));
-// monkeyEntity.addComponent(monkeyModel);
-// monkeyEntity.customProperties = { isDynamic: true };
+await loader.load(new URL('./testScene/scene.gltf', import.meta.url));
 
 const scene = loader.loadScene();
 const camera = loader.loadNode('Camera');
-// camera.removeComponentsOfType(isDynamic)
 camera.aabb = {
     min: [-0.2, -0.2, -0.2],
     max: [0.2, 0.2, 0.2],
@@ -65,14 +38,12 @@ const transform = chickenEntity.getComponentOfType(Transform);
 transform.translation = [5, 10, -5];
 
 chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canvas));
-// scene.push(monkeyEntity);
-// scene.push(chickenEntity);
 
 const physics = new Physics(scene);
-
-for (const entity of scene) {
-    console.log(entity);
-}
+// izpis objektov
+// for (const entity of scene) {
+//     console.log(entity);
+// }
 
 for (const entity of scene) {
     const model = entity.getComponentOfType(Model);
@@ -84,13 +55,39 @@ for (const entity of scene) {
     entity.aabb = mergeAxisAlignedBoundingBoxes(boxes);
 }
 
+const startScreen = document.getElementById('start');
+const instructionsScreen = document.getElementById('instructions');
+const overlay = document.getElementById('frontPageSquare');
+
+let gameStarted = false; // comment when working and in css
+// let gameStarted = true; // comment when presenting and in css
+
+document.getElementById('btnInstructions').onclick = () => {
+    startScreen.classList.add('hidden');
+    instructionsScreen.classList.remove('hidden');
+};
+
+document.getElementById('btnBack').onclick = () => {
+    instructionsScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+};
+
+document.getElementById('btnStart').onclick = () => {
+    overlay.classList.add('hidden');
+    gameStarted = true;
+    canvas.requestPointerLock();
+};
+
 function update(time, dt) {
+    if (!gameStarted) {
+        return;
+    }
+    
     for (const entity of scene) {
         for (const component of entity.components) {
             component.update?.(time, dt);
         }
     }
-
     physics.update(time, dt);
 }
 
@@ -98,8 +95,12 @@ function render() {
     renderer.render(scene, camera);
 }
 
+// Resize in sistemi ostanejo zunaj, da se canvas pravilno prilagodi takoj ob nalaganju
 function resize({ displaySize: { width, height } }) {
-    camera.getComponentOfType(Camera).aspect = width / height;
+    const camComponent = camera.getComponentOfType(Camera);
+    if (camComponent) {
+        camComponent.aspect = width / height;
+    }
 }
 
 new ResizeSystem({ canvas, resize }).start();
