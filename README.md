@@ -6,12 +6,13 @@ TODO:
 - create custom play enviroment with new models, 🚧
 - do Phong shading/lighting model, 🚧
 - figure out what puzzles, 🚧
-- fix nonlinear object collisions, 🚧
+- fix nonlinear and normal object collisions, 🚧
 - add interactions, ✅
 - implement start menu, ✅
 - implement esc key menu, 🚧
 - fix GLTFloader importing models without images, 🚧
 - make frontPage look good, 🚧
 - Please add more tasks ...
+
 
 
