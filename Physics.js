@@ -10,7 +10,7 @@ export class Physics {
     }
 
     update(t, dt) {
-        const uiElement = document.getElementById('interaction-ui');
+        const uiElement = document.getElementById('interactionUi');
         if (uiElement) {
             uiElement.style.display = 'none';
         }
