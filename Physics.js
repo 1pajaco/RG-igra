@@ -159,13 +159,8 @@ export class Physics {
 
             if (controller.keys['KeyE']) {
                 trigger.customProperties.used = true;
+                trigger.customProperties.isStatic = false;
                 uiElement.style.display = 'none';
-                for (const entity of this.scene) {
-                    const parent = entity.getComponentOfType(Parent);
-                    if (parent && parent.entity === trigger) {
-                        entity.customProperties.isStatic = false;
-                    }
-                }
                 console.log("Good job you pecked the box and it vanished!");
             }
         }

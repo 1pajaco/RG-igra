@@ -190,11 +190,10 @@ export class UnlitRenderer extends BaseRenderer {
         this.renderPass.setBindGroup(0, cameraBindGroup);
 
         for (const entity of entities) {
-            if (entity.customProperties?.isTrigger) {
+            const parent = entity.getComponentOfType(Parent);
+            if(entity.customProperties?.used){
                 continue;
             }
-
-            const parent = entity.getComponentOfType(Parent);
             if (parent && parent.entity?.customProperties?.used && SceneUtils.isTriggerRecursive(entity)) {
                 continue;
             }

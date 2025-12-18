@@ -10,6 +10,7 @@ TODO:
 - add interactions,
 - implement start menu,
 - implement esc key menu,
+- fix GLTFloader importing models without images,
 - Please add more tasks ...
 
 
