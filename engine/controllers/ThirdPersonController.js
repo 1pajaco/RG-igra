@@ -13,7 +13,9 @@ export class ThirdPersonController {
         maxSpeed = 5,
         decay = 0.99999,
         pointerSensitivity = 0.002,
-        cameraOffset = [0, 1.5, 4],
+        cameraOffset = [0, 1.5, 5],
+        pitchOffset = -0.4,
+        playerGravity = -15,
 
     } = {}) {
         this.entity = entity;
@@ -26,13 +28,20 @@ export class ThirdPersonController {
         this.yaw = yaw;
 
         this.velocity = velocity;
-        this.acceleration = acceleration;
-        this.maxSpeed = maxSpeed;
+        this.accelerationWalk = acceleration;
+        this.maxWalkingSpeed = maxSpeed;
+        this.maxRunningSpeed = maxSpeed * 2.5;
+        this.accelerationRun = acceleration * 2;
         this.decay = decay;
         this.pointerSensitivity = pointerSensitivity;
 
         this.initialYawOffset = initialYawOffset;
         this.cameraOffset = cameraOffset;
+        this.pitchOffset = pitchOffset;
+
+        this.playerGravity = playerGravity;
+        this.onGround = false;
+        this.verticalVelocity = 0;
 
         this.initHandlers();
     }
@@ -82,6 +91,19 @@ export class ThirdPersonController {
         if (this.keys['KeyA']) {
             vec3.sub(acc, acc, right);
         }
+        if (this.keys['Space'] && this.onGround) {
+            this.verticalVelocity = 10;
+            this.onGround = false;
+        }
+        if (this.keys['ShiftLeft']) {
+            this.maxSpeed = this.maxRunningSpeed;
+            this.acceleration = this.accelerationRun;
+        }
+
+        if (!this.keys['ShiftLeft']) {
+            this.maxSpeed = this.maxWalkingSpeed;
+            this.acceleration = this.accelerationWalk;
+        }
 
         // Update velocity based on acceleration.
         vec3.scaleAndAdd(this.velocity, this.velocity, acc, dt * this.acceleration);
@@ -101,6 +123,8 @@ export class ThirdPersonController {
             vec3.scale(this.velocity, this.velocity, this.maxSpeed / speed);
         }
 
+        this.verticalVelocity += this.playerGravity * dt;
+
         const transformEntity = this.entity.getComponentOfType(Transform);
         const transformCamera = this.camera.getComponentOfType(Transform);
         if (transformEntity && transformCamera) {
@@ -108,14 +132,18 @@ export class ThirdPersonController {
             vec3.scaleAndAdd(transformEntity.translation,
                 transformEntity.translation, this.velocity, dt);
 
+            if (!this.onGround) {
+                transformEntity.translation[1] = transformEntity.translation[1] + (this.verticalVelocity * dt);
+            }
+
             // Update rotation based on the Euler angles.
             const entityRotation = quat.create();
             quat.rotateY(entityRotation, entityRotation, entityYaw);
-            quat.rotateX(entityRotation, entityRotation, -this.pitch);
-            
+            // quat.rotateX(entityRotation, entityRotation, -this.pitch);
+
             const cameraRotation = quat.create();
             quat.rotateY(cameraRotation, cameraRotation, currentYaw);
-            quat.rotateX(cameraRotation, cameraRotation, this.pitch);
+            quat.rotateX(cameraRotation, cameraRotation, this.pitch + this.pitchOffset);
 
             transformEntity.rotation = entityRotation;
 

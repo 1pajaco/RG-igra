@@ -35,3 +35,16 @@ export function getGlobalViewMatrix(entity) {
 export function getProjectionMatrix(entity) {
     return entity.getComponentOfType(Camera)?.projectionMatrix ?? mat4.create();
 }
+
+export function isTriggerRecursive(entity) {
+    if (entity.customProperties?.isTrigger) {
+        return true;
+    }
+    const parent = entity.getComponentOfType(Parent);
+
+    if (parent && parent.entity) {
+        return isTriggerRecursive(parent.entity);
+    }
+
+    return false;
+}
