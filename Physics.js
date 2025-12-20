@@ -33,12 +33,106 @@ export class Physics {
                         this.checkTrigger(entity, other, controller, uiElement);
                     }
                     if (entity !== other && other.customProperties?.isStatic) {
-                        this.resolveCollision(entity, other, controller);
+                        this.resolveCollisionOBB(entity, other, controller);
                     }
 
                 }
             }
         }
+    }
+    //https://github.com/mrdoob/three.js/blob/master/examples/jsm/math/OBB.js
+    getOBB(entity) {
+        const matrix = getGlobalModelMatrix(entity);
+        const center = vec3.fromValues(matrix[12], matrix[13], matrix[14]);
+
+        const axisX = vec3.fromValues(matrix[0], matrix[1], matrix[2]);
+        const axisY = vec3.fromValues(matrix[4], matrix[5], matrix[6]);
+        const axisZ = vec3.fromValues(matrix[8], matrix[9], matrix[10]);
+
+        const scaleX = vec3.length(axisX);
+        const scaleY = vec3.length(axisY);
+        const scaleZ = vec3.length(axisZ);
+
+        vec3.normalize(axisX, axisX);
+        vec3.normalize(axisY, axisY);
+        vec3.normalize(axisZ, axisZ);
+
+        const { min, max } = entity.aabb;
+        const halfExtents = [
+            ((max[0] - min[0]) / 2) * scaleX,
+            ((max[1] - min[1]) / 2) * scaleY,
+            ((max[2] - min[2]) / 2) * scaleZ
+        ];
+
+        return { center, axes: [axisX, axisY, axisZ], halfExtents };
+    }
+    testAxis(axis, obbA, obbB) {
+        const distVec = vec3.sub(vec3.create(), obbB.center, obbA.center);
+        const dist = Math.abs(vec3.dot(distVec, axis));
+
+        const rA = obbA.halfExtents[0] * Math.abs(vec3.dot(obbA.axes[0], axis)) +
+                   obbA.halfExtents[1] * Math.abs(vec3.dot(obbA.axes[1], axis)) +
+                   obbA.halfExtents[2] * Math.abs(vec3.dot(obbA.axes[2], axis));
+
+        const rB = obbB.halfExtents[0] * Math.abs(vec3.dot(obbB.axes[0], axis)) +
+                   obbB.halfExtents[1] * Math.abs(vec3.dot(obbB.axes[1], axis)) +
+                   obbB.halfExtents[2] * Math.abs(vec3.dot(obbB.axes[2], axis));
+
+        return (rA + rB) - dist;
+    }
+    resolveCollisionOBB(a, b, controller) {
+        const obbA = this.getOBB(a);
+        const obbB = this.getOBB(b);
+
+        const axes = [...obbA.axes, ...obbB.axes];
+        // Cross products for edge cases
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const cross = vec3.cross(vec3.create(), obbA.axes[i], obbB.axes[j]);
+                if (vec3.length(cross) > 0.001) {
+                    vec3.normalize(cross, cross);
+                    axes.push(cross);
+                }
+            }
+        }
+
+        let minOverlap = Infinity;
+        let smallestAxis = null;
+
+        for (const axis of axes) {
+            const overlap = this.testAxis(axis, obbA, obbB);
+            if (overlap < 0) return; // Gap found
+            if (overlap < minOverlap) {
+                minOverlap = overlap;
+                smallestAxis = axis;
+            }
+        }
+
+        const transform = a.getComponentOfType(Transform);
+        const d = vec3.sub(vec3.create(), obbA.center, obbB.center);
+        if (vec3.dot(d, smallestAxis) < 0) vec3.negate(smallestAxis, smallestAxis);
+
+        const pushOut = vec3.scale(vec3.create(), smallestAxis, minOverlap);
+
+        const upward = smallestAxis[1];
+        
+        //if (pushOut[1] > 0 && controller.verticalVelocity < 0) {
+        //    controller.onGround = true;
+        //    controller.verticalVelocity = 0;
+        //}
+        if (upward > 0.7 && controller.verticalVelocity <= 0) {
+            controller.onGround = true;
+            controller.verticalVelocity = 0;
+            
+            // Snap to floor height to prevent micro-stuttering
+            transform.translation[1] += pushOut[1];
+        }
+
+        // Always push out horizontally to prevent clipping into walls
+        transform.translation[0] += pushOut[0];
+        transform.translation[2] += pushOut[2];
+
+        //vec3.add(transform.translation, transform.translation, pushOut);
     }
 
     intervalIntersection(min1, max1, min2, max2) {
