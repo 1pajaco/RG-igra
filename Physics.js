@@ -29,22 +29,31 @@ export class Physics {
 
                 controller.onGround = false;
                 for (const other of this.scene) {
-                    if (entity !== other && isTriggerRecursive(other)) {
+                    if (entity === other) continue;
+
+                    if (isTriggerRecursive(other)) {
                         this.checkTrigger(entity, other, controller, uiElement);
                     }
-                    if (entity !== other && other.customProperties?.isStatic) {
-                        // this.resolveCollisionOBB(entity, other, controller);
-                        this.resolveCollision(entity, other, controller);
+                    if (other.customProperties?.isStatic) {
+                        this.resolveCollisionOBB(entity, other, controller);
                     }
 
                 }
+                if (controller.camera){
+                    this.resolveCameraCollisionOBB(controller.camera,entity,this.scene);
+                }
+
             }
         }
     }
     //https://github.com/mrdoob/three.js/blob/master/examples/jsm/math/OBB.js
     getOBB(entity) {
         const matrix = getGlobalModelMatrix(entity);
-        const center = vec3.fromValues(matrix[12], matrix[13], matrix[14]);
+        const { min,max } = entity.aabb;
+
+        const localCentre = vec3.add(vec3.create(), min, max);
+        vec3.scale(localCentre, localCentre, 0.5);
+        const center = vec3.transformMat4(vec3.create(), localCentre, matrix);
 
         const axisX = vec3.fromValues(matrix[0], matrix[1], matrix[2]);
         const axisY = vec3.fromValues(matrix[4], matrix[5], matrix[6]);
@@ -58,7 +67,6 @@ export class Physics {
         vec3.normalize(axisY, axisY);
         vec3.normalize(axisZ, axisZ);
 
-        const { min, max } = entity.aabb;
         const halfExtents = [
             ((max[0] - min[0]) / 2) * scaleX,
             ((max[1] - min[1]) / 2) * scaleY,
@@ -81,10 +89,7 @@ export class Physics {
 
         return (rA + rB) - dist;
     }
-    resolveCollisionOBB(a, b, controller) {
-        const obbA = this.getOBB(a);
-        const obbB = this.getOBB(b);
-
+    getIntersection(obbA, obbB) {
         const axes = [...obbA.axes, ...obbB.axes];
         // Cross products for edge cases
         for (let i = 0; i < 3; i++) {
@@ -108,14 +113,25 @@ export class Physics {
                 smallestAxis = axis;
             }
         }
+        return { overlap: minOverlap, axis: smallestAxis };
+    }
+    resolveCollisionOBB(a, b, controller) {
+        const obbA = this.getOBB(a);
+        const obbB = this.getOBB(b);
+
+        const intersection = this.getIntersection(this.getOBB(a), this.getOBB(b));
+        if (!intersection) return;
+
+        let { overlap, axis } = intersection;        
+        if (!intersection) return;
 
         const transform = a.getComponentOfType(Transform);
         const d = vec3.sub(vec3.create(), obbA.center, obbB.center);
-        if (vec3.dot(d, smallestAxis) < 0) vec3.negate(smallestAxis, smallestAxis);
+        if (vec3.dot(d, axis) < 0) vec3.negate(axis, axis);
 
-        const pushOut = vec3.scale(vec3.create(), smallestAxis, minOverlap);
+        const pushOut = vec3.scale(vec3.create(), axis, overlap);
 
-        const upward = smallestAxis[1];
+        const upward = axis[1];
         
         //if (pushOut[1] > 0 && controller.verticalVelocity < 0) {
         //    controller.onGround = true;
@@ -128,6 +144,10 @@ export class Physics {
             // Snap to floor height to prevent micro-stuttering
             transform.translation[1] += pushOut[1];
         }
+        else if (upward < -0.7 && controller.verticalVelocity > 0) {
+            controller.verticalVelocity = 0;
+            transform.translation[1] += pushOut[1];
+        }
 
         // Always push out horizontally to prevent clipping into walls
         transform.translation[0] += pushOut[0];
@@ -135,7 +155,52 @@ export class Physics {
 
         //vec3.add(transform.translation, transform.translation, pushOut);
     }
+    resolveCameraCollisionOBB(camera,player,scene){
+      const transform = camera.getComponentOfType(Transform);
+      const playerTransform = player.getComponentOfType(Transform);
+      const playerHead = vec3.add(
+        vec3.create(),
+        playerTransform.translation,
+        [0, 4, 0]
+      );
+      for (let i = 0; i < 5; i++) {
+        const cameraOBB = this.getOBB(camera);
+        let collided = false;
 
+        for (const other of scene) {
+          if (!other.customProperties?.isStatic || isTriggerRecursive(other))
+            continue;
+
+          const otherOBB = this.getOBB(other);
+          const intersection = this.getIntersection(cameraOBB, otherOBB);
+
+          if (intersection) {
+            collided = true;
+            let { overlap, axis } = intersection;
+            const toCamera = vec3.sub(vec3.create(), cameraOBB.center, otherOBB.center);
+            const toHead = vec3.sub(vec3.create(), playerHead, cameraOBB.center);
+            //const d = vec3.sub(
+            //  vec3.create(),
+            //  cameraOBB.center,
+            //  otherOBB.center
+            //);
+            if (vec3.dot(toCamera, axis) < 0) vec3.negate(axis, axis);            const camToHead = vec3.sub(vec3.create(), playerHead, cameraOBB.center);
+            if (vec3.dot(axis, toHead) < -0.2) {
+                        // This usually happens when the OBB center is more than 50% inside a thin floor/wall
+                        vec3.negate(axis, axis);
+            }
+
+            // Push camera out of the object
+            const pushOut = vec3.scale(vec3.create(), axis, overlap);
+            vec3.add(transform.translation, transform.translation, pushOut);
+
+            // Update cameraOBB position for next potential collision in same frame
+            vec3.add(cameraOBB.center, cameraOBB.center, pushOut);
+          }
+        }
+        if (!collided) break;
+      }
+    }
     intervalIntersection(min1, max1, min2, max2) {
         return !(min1 > max2 || min2 > max1);
     }
