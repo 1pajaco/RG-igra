@@ -33,7 +33,8 @@ export class Physics {
                         this.checkTrigger(entity, other, controller, uiElement);
                     }
                     if (entity !== other && other.customProperties?.isStatic) {
-                        this.resolveCollisionOBB(entity, other, controller);
+                        // this.resolveCollisionOBB(entity, other, controller);
+                        this.resolveCollision(entity, other, controller);
                     }
 
                 }
@@ -103,7 +104,7 @@ export class Physics {
             const overlap = this.testAxis(axis, obbA, obbB);
             if (overlap < 0) return; // Gap found
             if (overlap < minOverlap) {
-                minOverlap = overlap;
+                minOverlap = overlap; 
                 smallestAxis = axis;
             }
         }
@@ -256,6 +257,12 @@ export class Physics {
                 trigger.customProperties.isStatic = false;
                 uiElement.style.display = 'none';
                 console.log("Good job you pecked the box and it vanished!");
+                for(const entity of this.scene){
+                    if(entity.name === "Door"){
+                        entity.customProperties.used = true;
+                        entity.customProperties.isStatic = false;
+                    }
+                }
             }
         }
 

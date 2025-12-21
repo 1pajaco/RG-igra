@@ -41,9 +41,10 @@ chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canv
 
 const physics = new Physics(scene);
 // izpis objektov
-// for (const entity of scene) {
-//     console.log(entity);
-// }
+for (const entity of scene) {
+    console.log(entity);
+}
+
 
 for (const entity of scene) {
     const model = entity.getComponentOfType(Model);
@@ -82,7 +83,7 @@ function update(time, dt) {
     if (!gameStarted) {
         return;
     }
-    
+
     for (const entity of scene) {
         for (const component of entity.components) {
             component.update?.(time, dt);
