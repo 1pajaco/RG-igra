@@ -40,7 +40,7 @@ export class Physics {
 
                 }
                 if (controller.camera){
-                    this.resolveCameraCollisionOBB(controller.camera,this.scene);
+                    this.resolveCameraCollisionOBB(controller.camera,entity,this.scene);
                 }
 
             }
@@ -155,28 +155,51 @@ export class Physics {
 
         //vec3.add(transform.translation, transform.translation, pushOut);
     }
-    resolveCameraCollisionOBB(camera,scene){
-        const transform = camera.getComponentOfType(Transform);
+    resolveCameraCollisionOBB(camera,player,scene){
+      const transform = camera.getComponentOfType(Transform);
+      const playerTransform = player.getComponentOfType(Transform);
+      const playerHead = vec3.add(
+        vec3.create(),
+        playerTransform.translation,
+        [0, 4, 0]
+      );
+      for (let i = 0; i < 5; i++) {
         const cameraOBB = this.getOBB(camera);
+        let collided = false;
+
         for (const other of scene) {
-            if (!other.customProperties?.isStatic || isTriggerRecursive(other)) continue;
+          if (!other.customProperties?.isStatic || isTriggerRecursive(other))
+            continue;
 
-            const otherOBB = this.getOBB(other);
-            const intersection = this.getIntersection(cameraOBB, otherOBB);
+          const otherOBB = this.getOBB(other);
+          const intersection = this.getIntersection(cameraOBB, otherOBB);
 
-            if (intersection) {
-                let { overlap, axis } = intersection;
-                const d = vec3.sub(vec3.create(), cameraOBB.center, otherOBB.center);
-                if (vec3.dot(d, axis) < 0) vec3.negate(axis, axis);
-
-                // Push camera out of the object
-                const pushOut = vec3.scale(vec3.create(), axis, overlap);
-                vec3.add(transform.translation, transform.translation, pushOut);
-                
-                // Update cameraOBB position for next potential collision in same frame
-                vec3.add(cameraOBB.center, cameraOBB.center, pushOut);
+          if (intersection) {
+            collided = true;
+            let { overlap, axis } = intersection;
+            const toCamera = vec3.sub(vec3.create(), cameraOBB.center, otherOBB.center);
+            const toHead = vec3.sub(vec3.create(), playerHead, cameraOBB.center);
+            //const d = vec3.sub(
+            //  vec3.create(),
+            //  cameraOBB.center,
+            //  otherOBB.center
+            //);
+            if (vec3.dot(toCamera, axis) < 0) vec3.negate(axis, axis);            const camToHead = vec3.sub(vec3.create(), playerHead, cameraOBB.center);
+            if (vec3.dot(axis, toHead) < -0.2) {
+                        // This usually happens when the OBB center is more than 50% inside a thin floor/wall
+                        vec3.negate(axis, axis);
             }
+
+            // Push camera out of the object
+            const pushOut = vec3.scale(vec3.create(), axis, overlap);
+            vec3.add(transform.translation, transform.translation, pushOut);
+
+            // Update cameraOBB position for next potential collision in same frame
+            vec3.add(cameraOBB.center, cameraOBB.center, pushOut);
+          }
         }
+        if (!collided) break;
+      }
     }
     intervalIntersection(min1, max1, min2, max2) {
         return !(min1 > max2 || min2 > max1);

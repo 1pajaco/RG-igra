@@ -29,8 +29,8 @@ await loader.load(new URL('./testScene/scene.gltf', import.meta.url));
 const scene = loader.loadScene();
 const camera = loader.loadNode('Camera');
 camera.aabb = {
-    min: [-0.2, -0.2, -0.2],
-    max: [0.2, 0.2, 0.2],
+    min: [-0.8, -0.8, -0.8],
+    max: [0.8, 0.8, 0.8],
 };
 
 const chickenEntity = loader.loadNode('Object_218');
