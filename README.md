@@ -14,6 +14,8 @@ TODO:
 - make frontPage look good, 🚧
 - Please add more tasks ...
 
-
-
+Issues:
+- camera spin when dual monitor,
+- it doesnt work in chrome,
+- collisions don't work properly,
 
