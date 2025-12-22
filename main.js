@@ -2,12 +2,9 @@ import { ResizeSystem } from 'engine/systems/ResizeSystem.js';
 import { UpdateSystem } from 'engine/systems/UpdateSystem.js';
 
 import { GLTFLoader } from 'engine/loaders/GLTFLoader.js';
-import { OBJLoader } from 'engine/loaders/OBJLoader.js';
-import { UnlitRenderer } from 'engine/renderers/UnlitRenderer.js';
+import { Renderer } from './engine/renderers/phong/Renderer.js';
+import { Light } from './engine/core/Light.js';
 
-
-import { FirstPersonController } from 'engine/controllers/FirstPersonController.js';
-import { MonkeController } from './engine/controllers/MonkeController.js';
 import { ThirdPersonController } from './engine/controllers/ThirdPersonController.js';
 
 import { Camera, Model, Entity, Transform, Primitive, Material, Texture, Sampler } from 'engine/core/core.js';
@@ -20,11 +17,11 @@ import {
 import { Physics } from './Physics.js';
 
 const canvas = document.querySelector('canvas');
-const renderer = new UnlitRenderer(canvas);
+const renderer = new Renderer(canvas);
 await renderer.initialize();
 
 const loader = new GLTFLoader();
-await loader.load(new URL('./testScene/scene.gltf', import.meta.url));
+await loader.load(new URL('./firstScene/scene.gltf', import.meta.url));
 
 const scene = loader.loadScene();
 const camera = loader.loadNode('Camera');
@@ -39,17 +36,43 @@ transform.translation = [5, 10, -5];
 
 chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canvas));
 
-const physics = new Physics(scene);
-// izpis objektov
-for (const entity of scene) {
-    console.log(entity);
-}
+const light00 = new Entity();
+light00.addComponent(new Transform({
+    translation: [0, 2, 2],
+}));
+light00.addComponent(new Light({
+    intensity: 3,
+}));
+light00.name = "chickenLight";
+const light01 = new Entity();
+light01.addComponent(new Transform({
+    translation: [0, 2, 2],
+}));
+light01.addComponent(new Light({
+    intensity: 3,
+}));
 
+light01.name = "light01";
+scene.push(light00);
+scene.push(light01);
+
+const physics = new Physics(scene);
+// // // izpis objektov
+// for (const entity of scene) {
+//     console.log(entity);
+// }
 
 for (const entity of scene) {
     const model = entity.getComponentOfType(Model);
     if (!model) {
         continue;
+    }
+
+    for (const primitive of model.primitives) {
+        const material = primitive.material;
+        if (material.diffuse === undefined) material.diffuse = 1.0;
+        if (material.specular === undefined) material.specular = 1.0;
+        if (material.shininess === undefined) material.shininess = 50.0;
     }
 
     const boxes = model.primitives.map(primitive => calculateAxisAlignedBoundingBox(primitive.mesh));
@@ -83,6 +106,15 @@ function update(time, dt) {
     if (!gameStarted) {
         return;
     }
+
+    const chickenPos = chickenEntity.getComponentOfType(Transform).translation;
+    const lightTransform = light00.getComponentOfType(Transform);
+
+    lightTransform.translation = [
+        chickenPos[0],
+        chickenPos[1] + 3,
+        chickenPos[2],
+    ];
 
     for (const entity of scene) {
         for (const component of entity.components) {
