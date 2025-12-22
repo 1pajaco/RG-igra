@@ -16,6 +16,5 @@ TODO:
 
 Issues:
 - camera spin when dual monitor,
-- it doesnt work in chrome,
-- collisions don't work properly,
+- GLTF loader is lacking when importing a hierarchy, mipmaps, etc.
 
