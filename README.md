@@ -6,8 +6,8 @@ TODO:
 - add interactions, ✅
 - implement start menu, ✅
 - fix nonlinear and normal object collisions (OBB), ✅
+- do Phong shading/lighting model for 1 light source, ✅
 - create custom play enviroment with new models, 🚧
-- do Phong shading/lighting model, 🚧
 - figure out what puzzles, 🚧
 - implement esc key menu, 🚧
 - fix GLTFloader importing models without images, 🚧
@@ -17,4 +17,5 @@ TODO:
 Issues:
 - camera spin when dual monitor,
 - GLTF loader is lacking when importing a hierarchy, mipmaps, etc.
+- camera collisions are problematic when colliding with box geometry
 
