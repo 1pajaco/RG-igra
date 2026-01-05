@@ -71,8 +71,8 @@ for (const entity of scene) {
     for (const primitive of model.primitives) {
         const material = primitive.material;
         if (material.diffuse === undefined) material.diffuse = 1.0;
-        if (material.specular === undefined) material.specular = 1.0;
-        if (material.shininess === undefined) material.shininess = 50.0;
+        if (material.specular === undefined) material.specular = 0.0;
+        if (material.shininess === undefined) material.shininess = 1.0;
     }
 
     const boxes = model.primitives.map(primitive => calculateAxisAlignedBoundingBox(primitive.mesh));

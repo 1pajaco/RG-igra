@@ -7,9 +7,10 @@ TODO:
 - implement start menu, ✅
 - fix nonlinear and normal object collisions (OBB), ✅
 - do Phong shading/lighting model for 1 light source, ✅
+- have more than 1 light source,
+- make a light source be a reflector,
 - create custom play enviroment with new models, 🚧
 - figure out what puzzles, 🚧
-- implement esc key menu, 🚧
 - fix GLTFloader importing models without images, 🚧
 - make frontPage look good, 🚧
 - Please add more tasks ...
