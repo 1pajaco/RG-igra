@@ -44,17 +44,7 @@ light00.addComponent(new Light({
     intensity: 3,
 }));
 light00.name = "chickenLight";
-const light01 = new Entity();
-light01.addComponent(new Transform({
-    translation: [0, 2, 2],
-}));
-light01.addComponent(new Light({
-    intensity: 3,
-}));
-
-light01.name = "light01";
 scene.push(light00);
-scene.push(light01);
 
 const physics = new Physics(scene);
 // // // izpis objektov
@@ -71,8 +61,8 @@ for (const entity of scene) {
     for (const primitive of model.primitives) {
         const material = primitive.material;
         if (material.diffuse === undefined) material.diffuse = 1.0;
-        if (material.specular === undefined) material.specular = 1.0;
-        if (material.shininess === undefined) material.shininess = 50.0;
+        if (material.specular === undefined) material.specular = 0.0;
+        if (material.shininess === undefined) material.shininess = 1.0;
     }
 
     const boxes = model.primitives.map(primitive => calculateAxisAlignedBoundingBox(primitive.mesh));

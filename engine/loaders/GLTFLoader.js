@@ -13,6 +13,8 @@ import {
     Vertex,
 } from '../core/core.js';
 
+import { Light } from '../core/Light.js';
+
 // TODO: GLB support
 // TODO: accessors with no buffer views (zero-initialized)
 // TODO: image from buffer view
@@ -465,7 +467,6 @@ export class GLTFLoader {
             entity.name = gltfSpec.name;
         }
 
-
         entity.addComponent(new Transform(gltfSpec));
 
         if (gltfSpec.children) {
@@ -481,6 +482,36 @@ export class GLTFLoader {
 
         if (gltfSpec.mesh !== undefined) {
             entity.addComponent(this.loadMesh(gltfSpec.mesh));
+        }
+
+        const lightsExt = this.gltf.extensions?.KHR_lights_punctual?.lights;
+        const nodeLightRef = gltfSpec.extensions?.KHR_lights_punctual?.light;
+        if (lightsExt[nodeLightRef]) {
+            const lightDef = lightsExt[nodeLightRef];
+
+            const typeMap = {
+                'point': 'point',
+                'directional': 'directional',
+                'spot': 'spot',
+            };
+            const type = typeMap[lightDef.type] ?? 'point';
+            const colorFloats = lightDef.color ?? [1.0, 1.0, 1.0];
+            const color = colorFloats.map(c => Math.round(c * 255));
+
+            const intensity = lightDef.intensity ?? 1.0;
+
+            const options = {
+                type,
+                color,
+                intensity,
+            };
+
+            if (type === 'spot' && lightDef.spot) {
+                options.innerConeAngle = lightDef.spot.innerConeAngle ?? 0.0;
+                options.outerConeAngle = lightDef.spot.outerConeAngle ?? (Math.PI / 4);
+            }
+
+            entity.addComponent(new Light(options));
         }
 
         if (gltfSpec.extras) {
