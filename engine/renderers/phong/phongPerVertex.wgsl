@@ -46,7 +46,9 @@ struct MaterialUniforms {
 }
 
 @group(0) @binding(0) var<uniform> camera: CameraUniforms;
-@group(1) @binding(0) var<uniform> light: LightUniforms;
+const MAX_LIGHTS: u32 = 16u;
+@group(1) @binding(0) var<uniform> lights: array<LightUniforms, 16>;
+@group(1) @binding(1) var<uniform> lightCount: u32;
 @group(2) @binding(0) var<uniform> model: ModelUniforms;
 @group(3) @binding(0) var<uniform> material: MaterialUniforms;
 @group(3) @binding(1) var baseTexture: texture_2d<f32>;
@@ -57,25 +59,28 @@ fn vertex(input: VertexInput) -> VertexOutput {
     var output: VertexOutput;
 
     let surfacePosition = (model.modelMatrix * vec4(input.position, 1)).xyz;
-    let d = distance(surfacePosition, light.position);
-    let attenuation = 1 / dot(light.attenuation, vec3(1, d, d * d));
-
     let N = normalize(model.normalMatrix * input.normal);
-    let L = normalize(light.position - surfacePosition);
     let V = normalize(camera.position - surfacePosition);
-    let R = normalize(reflect(-L, N));
 
-    let lambert = max(dot(N, L), 0.0) * material.diffuse;
-    let phong = pow(max(dot(V, R), 0.0), material.shininess) * material.specular;
-
-    let diffuseLight = lambert * attenuation * light.color;
-    let specularLight = phong * attenuation * light.color;
+    var diffuseLight = vec3f(0.0);
+    var specularLight = vec3f(0.0);
+    for (var i: u32 = 0u; i < lightCount; i = i + 1u) {
+        let l = lights[i];
+        let d = distance(surfacePosition, l.position);
+        let att = 1.0 / dot(l.attenuation, vec3(1.0, d, d * d));
+        let L = normalize(l.position - surfacePosition);
+        let R = normalize(reflect(-L, N));
+        let lambert = max(dot(N, L), 0.0) * material.diffuse;
+        let phong = pow(max(dot(V, R), 0.0), material.shininess) * material.specular;
+        diffuseLight += lambert * att * l.color;
+        specularLight += phong * att * l.color;
+    }
 
     output.position = camera.projectionMatrix * camera.viewMatrix * model.modelMatrix * vec4(input.position, 1);
     output.texcoords = input.texcoords;
 
-    output.diffuseLight = lambert * attenuation * light.color;
-    output.specularLight = phong * attenuation * light.color;
+    output.diffuseLight = diffuseLight;
+    output.specularLight = specularLight;
 
     return output;
 }

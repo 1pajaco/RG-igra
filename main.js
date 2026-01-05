@@ -44,17 +44,7 @@ light00.addComponent(new Light({
     intensity: 3,
 }));
 light00.name = "chickenLight";
-const light01 = new Entity();
-light01.addComponent(new Transform({
-    translation: [0, 2, 2],
-}));
-light01.addComponent(new Light({
-    intensity: 3,
-}));
-
-light01.name = "light01";
 scene.push(light00);
-scene.push(light01);
 
 const physics = new Physics(scene);
 // // // izpis objektov
