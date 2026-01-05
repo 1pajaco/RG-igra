@@ -89,6 +89,20 @@ const materialBindGroupLayout = {
         },
     ],
 };
+const postProcessBindGroupLayout = {
+    entries: [
+        {
+            binding: 0,
+            visibility: GPUShaderStage.FRAGMENT,
+            texture: {},
+        },
+        {
+            binding: 1,
+            visibility: GPUShaderStage.FRAGMENT,
+            sampler: {},
+        },
+    ],
+};
 
 export class Renderer extends BaseRenderer {
 
@@ -102,14 +116,17 @@ export class Renderer extends BaseRenderer {
 
         const codePerFragment = await fetch('./engine/renderers/phong/phongPerFragment.wgsl').then(response => response.text());
         const codePerVertex = await fetch('./engine/renderers/phong/phongPerVertex.wgsl').then(response => response.text());
+        const codePostProcess = await fetch('./engine/renderers/phong/postprocess.wgsl').then(response => response.text());
 
         const modulePerFragment = this.device.createShaderModule({ code: codePerFragment });
         const modulePerVertex = this.device.createShaderModule({ code: codePerVertex });
+        const modulePostProcess = this.device.createShaderModule({ code: codePostProcess });
 
         this.cameraBindGroupLayout = this.device.createBindGroupLayout(cameraBindGroupLayout);
         this.lightBindGroupLayout = this.device.createBindGroupLayout(lightBindGroupLayout);
         this.modelBindGroupLayout = this.device.createBindGroupLayout(modelBindGroupLayout);
         this.materialBindGroupLayout = this.device.createBindGroupLayout(materialBindGroupLayout);
+        this.postProcessBindGroupLayout = this.device.createBindGroupLayout(postProcessBindGroupLayout);
 
         const layout = this.device.createPipelineLayout({
             bindGroupLayouts: [
@@ -153,8 +170,39 @@ export class Renderer extends BaseRenderer {
             },
             layout,
         });
+        const postProcessLayout = this.device.createPipelineLayout({
+            bindGroupLayouts: [ this.postProcessBindGroupLayout ],
+        });
+        this.pipelinePostProcess = await this.device.createRenderPipelineAsync({
+            layout: postProcessLayout,
+            vertex: { module: modulePostProcess, entryPoint: 'vertex' },
+            fragment: { module: modulePostProcess, entryPoint: 'fragment', targets: [{ format: this.format }] },
+        });
+        
+        // POST-PROCESS: Create a sampler for reading the scene texture
+        this.postProcessSampler = this.device.createSampler({
+            magFilter: 'linear',
+            minFilter: 'linear',
+        });
 
-        this.recreateDepthTexture();
+        this.recreateRenderTarget();
+    }
+
+    recreateRenderTarget(){
+        this.depthTexture?.destroy();
+        this.sceneTexture?.destroy();
+
+        const size = [this.canvas.width, this.canvas.height];
+        this.depthTexture = this.device.createTexture({
+            format: 'depth24plus',
+            size,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        this.sceneTexture = this.device.createTexture({
+            format: this.format,
+            size,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+        });
     }
 
     recreateDepthTexture() {
@@ -273,27 +321,44 @@ export class Renderer extends BaseRenderer {
 
     render(scene, camera) {
         if (this.depthTexture.width !== this.canvas.width || this.depthTexture.height !== this.canvas.height) {
-            this.recreateDepthTexture();
+            this.recreateRenderTarget();
         }
 
         const encoder = this.device.createCommandEncoder();
-        this.renderPass = encoder.beginRenderPass({
+        const scenePass = encoder.beginRenderPass({
             colorAttachments: [
                 {
-                    view: this.context.getCurrentTexture(),
-                    clearValue: [1, 1, 1, 1],
+                    view: this.sceneTexture.createView(),
+                    clearValue: [0.5, 0.5, 0.5, 1],
                     loadOp: 'clear',
                     storeOp: 'store',
                 }
             ],
             depthStencilAttachment: {
-                view: this.depthTexture,
+                view: this.depthTexture.createView(),
                 depthClearValue: 1,
                 depthLoadOp: 'clear',
                 depthStoreOp: 'discard',
             },
         });
-        this.renderPass.setPipeline(this.perFragment ? this.pipelinePerFragment : this.pipelinePerVertex);
+        scenePass.setPipeline(this.perFragment ? this.pipelinePerFragment : this.pipelinePerVertex);
+        //this.renderPass = encoder.beginRenderPass({
+        //    colorAttachments: [
+        //        {
+        //            view: this.context.getCurrentTexture(),
+        //            clearValue: [1, 1, 1, 1],
+        //            loadOp: 'clear',
+        //            storeOp: 'store',
+        //        }
+        //    ],
+        //    depthStencilAttachment: {
+        //        view: this.depthTexture,
+        //        depthClearValue: 1,
+        //        depthLoadOp: 'clear',
+        //        depthStoreOp: 'discard',
+        //    },
+        //});
+        //this.renderPass.setPipeline(this.perFragment ? this.pipelinePerFragment : this.pipelinePerVertex);
 
         const cameraComponent = camera.getComponentOfType(Camera);
         const viewMatrix = getGlobalViewMatrix(camera);
@@ -303,7 +368,7 @@ export class Renderer extends BaseRenderer {
         this.device.queue.writeBuffer(cameraUniformBuffer, 0, viewMatrix);
         this.device.queue.writeBuffer(cameraUniformBuffer, 64, projectionMatrix);
         this.device.queue.writeBuffer(cameraUniformBuffer, 128, cameraPosition);
-        this.renderPass.setBindGroup(0, cameraBindGroup);
+        scenePass.setBindGroup(0, cameraBindGroup);
 
         const light = scene.find(entity => entity.getComponentOfType(Light));
         const lightComponent = light.getComponentOfType(Light);
@@ -314,7 +379,7 @@ export class Renderer extends BaseRenderer {
         this.device.queue.writeBuffer(lightUniformBuffer, 0, lightColor);
         this.device.queue.writeBuffer(lightUniformBuffer, 16, lightPosition);
         this.device.queue.writeBuffer(lightUniformBuffer, 32, lightAttenuation);
-        this.renderPass.setBindGroup(1, lightBindGroup);
+        scenePass.setBindGroup(1, lightBindGroup);
 
         for (const entity of scene) {
             const parent = entity.getComponentOfType(Parent);
@@ -325,35 +390,56 @@ export class Renderer extends BaseRenderer {
                 continue;
             }
 
-            this.renderEntity(entity);
+            this.renderEntity(entity, scenePass);
         }
 
-        this.renderPass.end();
+        scenePass.end();
+        const postPass = encoder.beginRenderPass({
+            colorAttachments: [
+                {
+                    view: this.context.getCurrentTexture().createView(),
+                    clearValue: [0, 0, 0, 1],
+                    loadOp: 'clear',
+                    storeOp: 'store',
+                }
+            ],
+        });
+        postPass.setPipeline(this.pipelinePostProcess);
+        const postBindGroup = this.device.createBindGroup({
+            layout: this.postProcessBindGroupLayout,
+            entries: [
+                { binding: 0, resource: this.sceneTexture.createView() },
+                { binding: 1, resource: this.postProcessSampler },
+            ],
+        });
+        postPass.setBindGroup(0, postBindGroup);
+        postPass.draw(3);
+        postPass.end();
         this.device.queue.submit([encoder.finish()]);
     }
 
-    renderEntity(entity) {
+    renderEntity(entity,pass) {
         const modelMatrix = getGlobalModelMatrix(entity);
         const normalMatrix = mat4.normalFromMat4(mat4.create(), modelMatrix);
 
         const { modelUniformBuffer, modelBindGroup } = this.prepareEntity(entity);
         this.device.queue.writeBuffer(modelUniformBuffer, 0, modelMatrix);
         this.device.queue.writeBuffer(modelUniformBuffer, 64, normalMatrix);
-        this.renderPass.setBindGroup(2, modelBindGroup);
+        pass.setBindGroup(2, modelBindGroup);
 
         for (const model of entity.getComponentsOfType(Model)) {
-            this.renderModel(model);
+            this.renderModel(model,pass);
         }
 
     }
 
-    renderModel(model) {
+    renderModel(model,pass) {
         for (const primitive of model.primitives) {
-            this.renderPrimitive(primitive);
+            this.renderPrimitive(primitive,pass);
         }
     }
 
-    renderPrimitive(primitive) {
+    renderPrimitive(primitive,pass) {
         const material = primitive.material;
         const { materialUniformBuffer, materialBindGroup } = this.prepareMaterial(material);
         this.device.queue.writeBuffer(materialUniformBuffer, 0, new Float32Array([
@@ -362,13 +448,13 @@ export class Renderer extends BaseRenderer {
             material.specular,
             material.shininess
         ]));
-        this.renderPass.setBindGroup(3, materialBindGroup);
+        pass.setBindGroup(3, materialBindGroup);
 
         const { vertexBuffer, indexBuffer } = this.prepareMesh(primitive.mesh, vertexBufferLayout);
-        this.renderPass.setVertexBuffer(0, vertexBuffer);
-        this.renderPass.setIndexBuffer(indexBuffer, 'uint32');
+        pass.setVertexBuffer(0, vertexBuffer);
+        pass.setIndexBuffer(indexBuffer, 'uint32');
 
-        this.renderPass.drawIndexed(primitive.mesh.indices.length);
+        pass.drawIndexed(primitive.mesh.indices.length);
     }
 
 }
