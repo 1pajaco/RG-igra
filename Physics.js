@@ -318,10 +318,15 @@ export class Physics {
             }
 
             if (controller.keys['KeyE']) {
-                trigger.customProperties.used = true;
-                trigger.customProperties.isStatic = false;
+                if(trigger.name === 'button'){
+                    trigger.customProperties.isTrigger = false;
+                    console.log("Good job you pecked the button!");
+                }else{
+                    trigger.customProperties.used = true;
+                    trigger.customProperties.isStatic = false;
+                    console.log("Good job you pecked the box and it vanished!");
+                }
                 uiElement.style.display = 'none';
-                console.log("Good job you pecked the box and it vanished!");
                 for(const entity of this.scene){
                     if(entity.name === "Door"){
                         entity.customProperties.used = true;

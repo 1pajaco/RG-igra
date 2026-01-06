@@ -171,6 +171,22 @@ export class ThirdPersonController {
     }
 
     keydownHandler(e) {
+        if (e.code === 'KeyP' && window.gameStarted) {
+            const overlay = document.getElementById('pauseOverlay');
+            if (overlay) {
+                if (overlay.style.display === 'flex') {
+                    overlay.style.display = 'none';
+                    overlay.classList.add('hidden');
+                    try { window.gameStarted = true; } catch (err) { }
+                } else {
+                    overlay.style.display = 'flex';
+                    overlay.classList.remove('hidden');
+                    try { window.gameStarted = false; } catch (err) { }
+                    try { document.exitPointerLock(); } catch (err) { }
+                }
+            }
+        }
+
         this.keys[e.code] = true;
     }
 
