@@ -74,8 +74,8 @@ const instructions = document.getElementById('instructions');
 const overlay = document.getElementById('frontPageSquare');
 const options = document.getElementById('options');
 
-let gameStarted = false; // comment when working and in css
-// let gameStarted = true; // comment when presenting and in css
+window.gameStarted = false; // comment when working and in css
+// window.gameStarted = true; // comment when presenting and in css
 
 document.getElementById('btnInstructions').onclick = () => {
     startScreen.classList.add('hidden');
@@ -99,7 +99,7 @@ document.getElementById('btnBackOptions').onclick = () => {
 
 document.getElementById('btnStart').onclick = () => {
     overlay.classList.add('hidden');
-    gameStarted = true;
+    window.gameStarted = true;
     canvas.requestPointerLock();
 };
 
@@ -115,7 +115,7 @@ if (blurCheckbox) {
 }
 
 function update(time, dt) {
-    if (!gameStarted) {
+    if (!window.gameStarted) {
         return;
     }
 
@@ -134,6 +134,20 @@ function update(time, dt) {
         }
     }
     physics.update(time, dt);
+}
+
+const btnResume = document.getElementById('btnResume');
+if (btnResume) {
+    btnResume.addEventListener('click', () => {
+        const overlay = document.getElementById('pauseOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            overlay.classList.add('hidden');
+        }
+        // Resume the game
+        window.gameStarted = true;
+        try { canvas.requestPointerLock(); } catch (e) { }
+    });
 }
 
 function render() {
