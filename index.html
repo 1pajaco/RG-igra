@@ -26,17 +26,27 @@
                 <h1>Chicken Game</h1>
                 <div id="btnGroup">
                     <button id="btnStart">START</button>
-                    <button id="btnInstructions">NAVODILA</button>
+                    <button id="btnOptions">OPTIONS</button>
+                    <button id="btnInstructions">INSTRUCTIONS</button>
                 </div>
             </div>
 
             <div id="instructions" class="menuCard hidden">
-                <h2>Navodila</h2>
+                <h2>Instructions</h2>
                 <p>Premikanje: W A S D</p>
                 <p>Skakanje: SpaceBar</p>
                 <p>Tek: LeftShift</p>
                 <p>Interakcija: E</p>
                 <button id="btnBack">NAZAJ</button>
+            </div>
+
+            <div id="options" class="menuCard hidden">
+                <h2>Options</h2>
+                <div class="optionRow">
+                    <label for="blurCheckbox">Blur</label>
+                    <input type="checkbox" id="blurCheckbox" />
+                </div>
+                <button id="btnBackOptions">BACK</button>
             </div>
         </div>
 

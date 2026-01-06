@@ -70,19 +70,30 @@ for (const entity of scene) {
 }
 
 const startScreen = document.getElementById('start');
-const instructionsScreen = document.getElementById('instructions');
+const instructions = document.getElementById('instructions');
 const overlay = document.getElementById('frontPageSquare');
+const options = document.getElementById('options');
 
 let gameStarted = false; // comment when working and in css
 // let gameStarted = true; // comment when presenting and in css
 
 document.getElementById('btnInstructions').onclick = () => {
     startScreen.classList.add('hidden');
-    instructionsScreen.classList.remove('hidden');
+    instructions.classList.remove('hidden');
 };
 
 document.getElementById('btnBack').onclick = () => {
-    instructionsScreen.classList.add('hidden');
+    instructions.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+};
+
+document.getElementById('btnOptions').onclick = () => {
+    startScreen.classList.add('hidden');
+    options.classList.remove('hidden');
+};
+
+document.getElementById('btnBackOptions').onclick = () => {
+    options.classList.add('hidden');
     startScreen.classList.remove('hidden');
 };
 
@@ -91,6 +102,17 @@ document.getElementById('btnStart').onclick = () => {
     gameStarted = true;
     canvas.requestPointerLock();
 };
+
+const blurCheckbox = document.getElementById('blurCheckbox');
+if (blurCheckbox) {
+    blurCheckbox.addEventListener('change', (e) => {
+        const enabled = !!e.target.checked;
+
+        if (renderer && typeof renderer.setBlurEnabled === 'function') {
+            renderer.setBlurEnabled(enabled);
+        }
+    });
+}
 
 function update(time, dt) {
     if (!gameStarted) {

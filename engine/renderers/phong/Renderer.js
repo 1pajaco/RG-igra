@@ -116,6 +116,12 @@ export class Renderer extends BaseRenderer {
     constructor(canvas) {
         super(canvas);
         this.perFragment = true;
+        this.postProcessBlur = false;
+    }
+
+    setBlurEnabled(enabled) {
+        this.postProcessBlur = !!enabled;
+        console.log(this.postProcessBlur);
     }
 
     async initialize() {
