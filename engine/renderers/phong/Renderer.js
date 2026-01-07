@@ -198,8 +198,8 @@ export class Renderer extends BaseRenderer {
             minFilter: 'linear',
         });
 
-        this.recreateRenderTarget();
-        this.lightArrayBuffer = this.device.createBuffer({ size: MAX_LIGHTS * 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    this.recreateRenderTarget();
+    this.lightArrayBuffer = this.device.createBuffer({ size: MAX_LIGHTS * 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         this.lightCountBuffer = this.device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         this.lightBindGroup = this.device.createBindGroup({
             layout: this.lightBindGroupLayout,
@@ -393,17 +393,29 @@ export class Renderer extends BaseRenderer {
         scenePass.setBindGroup(0, cameraBindGroup);
 
         const lights = scene.filter(e => e.getComponentOfType(Light));
-        const lightsData = new Float32Array(MAX_LIGHTS * 12);
+        const lightsData = new Float32Array(MAX_LIGHTS * 16);
         let count = 0;
         for (let i = 0; i < Math.min(lights.length, MAX_LIGHTS); i++) {
             const e = lights[i];
             const lc = e.getComponentOfType(Light);
-            const pos = mat4.getTranslation(vec3.create(), getGlobalModelMatrix(e));
-            const base = i * 12;
+            const m = getGlobalModelMatrix(e);
+            const pos = mat4.getTranslation(vec3.create(), m);
+            const base = i * 16;
             const lightColor = vec3.scale(vec3.create(), lc.color, lc.intensity / 255);
-            lightsData[base + 0] = lightColor[0]; lightsData[base + 1] = lightColor[1]; lightsData[base + 2] = lightColor[2]; lightsData[base + 3] = 0.0;
-            lightsData[base + 4] = pos[0]; lightsData[base + 5] = pos[1]; lightsData[base + 6] = pos[2]; lightsData[base + 7] = 0.0;
-            lightsData[base + 8] = lc.attenuation[0]; lightsData[base + 9] = lc.attenuation[1]; lightsData[base + 10] = lc.attenuation[2]; lightsData[base + 11] = 0.0;
+            lightsData[base + 0] = lightColor[0]; lightsData[base + 1] = lightColor[1]; lightsData[base + 2] = lightColor[2]; lightsData[base + 3] = lc.intensity ?? 1.0;
+            const typeId = (lc.type === 'directional') ? 1 : ((lc.type === 'spot') ? 2 : 0);
+            lightsData[base + 4] = pos[0];
+            lightsData[base + 5] = pos[1];
+            lightsData[base + 6] = pos[2];
+            lightsData[base + 7] = typeId;
+            const transformedDirPoint = vec3.transformMat4(vec3.create(), [0, 0, 1], m);
+            const forward = vec3.sub(vec3.create(), transformedDirPoint, pos);
+            vec3.normalize(forward, forward);
+            const innerCos = Math.cos(lc.innerConeAngle ?? 0.0);
+            lightsData[base + 8] = forward[0]; lightsData[base + 9] = forward[1]; lightsData[base + 10] = forward[2]; lightsData[base + 11] = innerCos;
+            const outerCos = Math.cos(lc.outerConeAngle ?? (Math.PI / 4));
+            const att = lc.attenuation ?? [1.0, 0.0, 0.0];
+            lightsData[base + 12] = outerCos; lightsData[base + 13] = att[0]; lightsData[base + 14] = att[1]; lightsData[base + 15] = att[2] ?? 0.0;
             count++;
         }
         this.device.queue.writeBuffer(this.lightArrayBuffer, 0, lightsData);

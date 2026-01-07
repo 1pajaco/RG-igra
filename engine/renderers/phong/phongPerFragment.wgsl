@@ -28,9 +28,10 @@ struct CameraUniforms {
 }
 
 struct LightUniforms {
-    color: vec3f,
-    position: vec3f,
-    attenuation: vec3f,
+    color: vec4f,
+    position: vec4f,
+    directionInner: vec4f,
+    outerAtt: vec4f,
 }
 
 struct ModelUniforms {
@@ -76,20 +77,47 @@ fn fragment(input: FragmentInput) -> FragmentOutput {
     var specularLight = vec3f(0.0);
     for (var i: u32 = 0u; i < lightCount; i = i + 1u) {
         let l = lights[i];
-        let d = distance(surfacePosition, l.position);
-        let att = 1 / dot(l.attenuation, vec3(1, d, d * d));
-        let L = normalize(l.position - surfacePosition);
+            let typeId = i32(l.position.w + 0.5);
+            var L = vec3f(0.0);
+            var att: f32 = 1.0;
+            if (typeId == 1) {
+                L = normalize(-l.directionInner.xyz);
+                att = 1.0;
+            } else {
+                L = normalize(l.position.xyz - surfacePosition);
+                let dist: f32 = distance(l.position.xyz, surfacePosition);
+                // Ad = 1 / |p - q|^2  =  1.0 / max(0.001, a0 + a1 * dist + a2 * dist * dist)
+                let a0: f32 = l.outerAtt.y;
+                let a1: f32 = l.outerAtt.z;
+                let a2: f32 = l.outerAtt.w;
+                att = 1.0 / max(0.001, a0 + a1 * dist + a2 * dist * dist);
+                if (typeId == 2) {
+                    let dir = normalize(-l.directionInner.xyz);
+                    let cosTheta: f32 = dot(L, dir);
+                    let inner: f32 = l.directionInner.w;
+                    let outer: f32 = l.outerAtt.x;
+                    var spot: f32 = 0.0;
+                    let f: f32 = 4.0;
+                    if (cosTheta <= outer) {
+                        spot = 0.0;
+                    } else {
+                        spot = pow(max(0.0, cosTheta), f);
+                    }
+                    att = att * spot;
+                }
+            }
+            var nDotL: f32 = max(0.0, dot(N, L));
+        diffuseLight += l.color.xyz * nDotL * att;
         let R = normalize(reflect(-L, N));
-        let lambert = max(dot(N, L), 0.0) * material.diffuse;
         let phong = pow(max(dot(V, R), 0.0), material.shininess) * material.specular;
-        diffuseLight += lambert * att * l.color;
-        specularLight += specularLight + phong * att * l.color;
+        specularLight += phong * att * l.color.xyz;
     }
 
     let baseColor = textureSample(baseTexture, baseSampler, input.texcoords) * material.baseFactor;
-    let finalColor = baseColor.rgb * diffuseLight + specularLight;
-
+    let ambient = baseColor.rgb * 0.001;
+    let finalColor = baseColor.rgb * diffuseLight + specularLight + ambient;
+    
     output.color = pow(vec4(finalColor, 1), vec4(1 / 2.2));
-
+    
     return output;
 }
