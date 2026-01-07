@@ -34,17 +34,20 @@ const chickenEntity = loader.loadNode('Object_218');
 const transform = chickenEntity.getComponentOfType(Transform);
 transform.translation = [5, 10, -5];
 
-chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canvas));
 
 const light00 = new Entity();
-light00.addComponent(new Transform({
-    translation: [0, 2, 2],
-}));
+light00.addComponent(new Transform());
 light00.addComponent(new Light({
-    intensity: 3,
+    type: 'spot',
+    color: [255, 220, 200],
+    intensity: 2.0,
+    attenuation: [0.5, 0.2, 0.05],
+    innerConeAngle: 0.15, 
+    outerConeAngle: 0.3, 
 }));
 light00.name = "chickenLight";
 scene.push(light00);
+chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canvas, { lightEntity: light00 }));
 
 const physics = new Physics(scene);
 // // // izpis objektov
@@ -124,7 +127,7 @@ function update(time, dt) {
 
     lightTransform.translation = [
         chickenPos[0],
-        chickenPos[1] + 3,
+        chickenPos[1] + 0.7,
         chickenPos[2],
     ];
 
@@ -134,6 +137,11 @@ function update(time, dt) {
         }
     }
     physics.update(time, dt);
+
+    const playerTransform = chickenEntity.getComponentOfType(Transform);
+    if (playerTransform) {
+        lightTransform.rotation = playerTransform.rotation.slice();
+    }
 }
 
 const btnResume = document.getElementById('btnResume');

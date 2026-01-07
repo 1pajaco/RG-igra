@@ -1,6 +1,7 @@
 import { quat, vec3, mat4 } from 'glm';
 
 import { Transform } from '../core/Transform.js';
+import { Light } from '../core/Light.js';
 
 export class ThirdPersonController {
 
@@ -16,6 +17,7 @@ export class ThirdPersonController {
         cameraOffset = [0, 1.5, 5],
         pitchOffset = -0.4,
         playerGravity = -15,
+        lightEntity = null,
 
     } = {}) {
         this.entity = entity;
@@ -43,7 +45,8 @@ export class ThirdPersonController {
         this.onGround = false;
         this.verticalVelocity = 0;
 
-        this.initHandlers();
+    this.initHandlers();
+    this.lightEntity = lightEntity;
     }
 
     initHandlers() {
@@ -184,6 +187,13 @@ export class ThirdPersonController {
                     try { window.gameStarted = false; } catch (err) { }
                     try { document.exitPointerLock(); } catch (err) { }
                 }
+            }
+        }
+
+        if (e.code === 'KeyL') {
+            const lightComp = this.lightEntity.getComponentOfType(Light);
+            if (lightComp) {
+                lightComp.type = (lightComp.type === 'spot') ? 'point' : 'spot';
             }
         }
 
