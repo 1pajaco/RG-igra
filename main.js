@@ -34,7 +34,6 @@ const chickenEntity = loader.loadNode('Object_218');
 const transform = chickenEntity.getComponentOfType(Transform);
 transform.translation = [5, 10, -5];
 
-chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canvas));
 
 const light00 = new Entity();
 light00.addComponent(new Transform());
@@ -43,11 +42,12 @@ light00.addComponent(new Light({
     color: [255, 220, 200],
     intensity: 2.0,
     attenuation: [0.5, 0.2, 0.05],
-    innerConeAngle: 0.3, 
-    outerConeAngle: 0.6, 
+    innerConeAngle: 0.15, 
+    outerConeAngle: 0.3, 
 }));
 light00.name = "chickenLight";
 scene.push(light00);
+chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canvas, { lightEntity: light00 }));
 
 const physics = new Physics(scene);
 // // // izpis objektov
@@ -127,7 +127,7 @@ function update(time, dt) {
 
     lightTransform.translation = [
         chickenPos[0],
-        chickenPos[1] + 0.5,
+        chickenPos[1] + 0.7,
         chickenPos[2],
     ];
 
