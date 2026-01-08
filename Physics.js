@@ -321,6 +321,12 @@ export class Physics {
                 if(trigger.name === 'button'){
                     trigger.customProperties.isTrigger = false;
                     console.log("Good job you pecked the button!");
+                } else if (trigger.name === 'button.001'){
+                    trigger.customProperties.isTrigger = false;
+                    console.log("Good job you pecked the button.001!");
+                } else if (trigger.name === 'button.002'){
+                    trigger.customProperties.isTrigger = false;
+                    console.log("Good job you pecked the button.002!");
                 }else{
                     trigger.customProperties.used = true;
                     trigger.customProperties.isStatic = false;
