@@ -51,9 +51,9 @@ chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canv
 
 const physics = new Physics(scene);
 // // // izpis objektov
-// for (const entity of scene) {
-//     console.log(entity);
-// }
+for (const entity of scene) {
+    console.log(entity);
+}
 
 for (const entity of scene) {
     const model = entity.getComponentOfType(Model);
