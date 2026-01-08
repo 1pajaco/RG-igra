@@ -39,8 +39,8 @@ export class Physics {
                     }
 
                 }
-                if (controller.camera){
-                    this.resolveCameraCollisionOBB(controller.camera,entity,this.scene);
+                if (controller.camera) {
+                    this.resolveCameraCollisionOBB(controller.camera, entity, this.scene);
                 }
 
             }
@@ -49,7 +49,7 @@ export class Physics {
     //https://github.com/mrdoob/three.js/blob/master/examples/jsm/math/OBB.js
     getOBB(entity) {
         const matrix = getGlobalModelMatrix(entity);
-        const { min,max } = entity.aabb;
+        const { min, max } = entity.aabb;
 
         const localCentre = vec3.add(vec3.create(), min, max);
         vec3.scale(localCentre, localCentre, 0.5);
@@ -80,12 +80,12 @@ export class Physics {
         const dist = Math.abs(vec3.dot(distVec, axis));
 
         const rA = obbA.halfExtents[0] * Math.abs(vec3.dot(obbA.axes[0], axis)) +
-                   obbA.halfExtents[1] * Math.abs(vec3.dot(obbA.axes[1], axis)) +
-                   obbA.halfExtents[2] * Math.abs(vec3.dot(obbA.axes[2], axis));
+            obbA.halfExtents[1] * Math.abs(vec3.dot(obbA.axes[1], axis)) +
+            obbA.halfExtents[2] * Math.abs(vec3.dot(obbA.axes[2], axis));
 
         const rB = obbB.halfExtents[0] * Math.abs(vec3.dot(obbB.axes[0], axis)) +
-                   obbB.halfExtents[1] * Math.abs(vec3.dot(obbB.axes[1], axis)) +
-                   obbB.halfExtents[2] * Math.abs(vec3.dot(obbB.axes[2], axis));
+            obbB.halfExtents[1] * Math.abs(vec3.dot(obbB.axes[1], axis)) +
+            obbB.halfExtents[2] * Math.abs(vec3.dot(obbB.axes[2], axis));
 
         return (rA + rB) - dist;
     }
@@ -109,7 +109,7 @@ export class Physics {
             const overlap = this.testAxis(axis, obbA, obbB);
             if (overlap < 0) return; // Gap found
             if (overlap < minOverlap) {
-                minOverlap = overlap; 
+                minOverlap = overlap;
                 smallestAxis = axis;
             }
         }
@@ -122,7 +122,7 @@ export class Physics {
         const intersection = this.getIntersection(this.getOBB(a), this.getOBB(b));
         if (!intersection) return;
 
-        let { overlap, axis } = intersection;        
+        let { overlap, axis } = intersection;
         if (!intersection) return;
 
         const transform = a.getComponentOfType(Transform);
@@ -132,7 +132,7 @@ export class Physics {
         const pushOut = vec3.scale(vec3.create(), axis, overlap);
 
         const upward = axis[1];
-        
+
         //if (pushOut[1] > 0 && controller.verticalVelocity < 0) {
         //    controller.onGround = true;
         //    controller.verticalVelocity = 0;
@@ -140,7 +140,7 @@ export class Physics {
         if (upward > 0.7 && controller.verticalVelocity <= 0) {
             controller.onGround = true;
             controller.verticalVelocity = 0;
-            
+
             // Snap to floor height to prevent micro-stuttering
             transform.translation[1] += pushOut[1];
         }
@@ -155,51 +155,51 @@ export class Physics {
 
         //vec3.add(transform.translation, transform.translation, pushOut);
     }
-    resolveCameraCollisionOBB(camera,player,scene){
-      const transform = camera.getComponentOfType(Transform);
-      const playerTransform = player.getComponentOfType(Transform);
-      const playerHead = vec3.add(
-        vec3.create(),
-        playerTransform.translation,
-        [0, 4, 0]
-      );
-      for (let i = 0; i < 5; i++) {
-        const cameraOBB = this.getOBB(camera);
-        let collided = false;
+    resolveCameraCollisionOBB(camera, player, scene) {
+        const transform = camera.getComponentOfType(Transform);
+        const playerTransform = player.getComponentOfType(Transform);
+        const playerHead = vec3.add(
+            vec3.create(),
+            playerTransform.translation,
+            [0, 4, 0]
+        );
+        for (let i = 0; i < 5; i++) {
+            const cameraOBB = this.getOBB(camera);
+            let collided = false;
 
-        for (const other of scene) {
-          if (!other.customProperties?.isStatic || isTriggerRecursive(other))
-            continue;
+            for (const other of scene) {
+                if (!other.customProperties?.isStatic || isTriggerRecursive(other))
+                    continue;
 
-          const otherOBB = this.getOBB(other);
-          const intersection = this.getIntersection(cameraOBB, otherOBB);
+                const otherOBB = this.getOBB(other);
+                const intersection = this.getIntersection(cameraOBB, otherOBB);
 
-          if (intersection) {
-            collided = true;
-            let { overlap, axis } = intersection;
-            const toCamera = vec3.sub(vec3.create(), cameraOBB.center, otherOBB.center);
-            const toHead = vec3.sub(vec3.create(), playerHead, cameraOBB.center);
-            //const d = vec3.sub(
-            //  vec3.create(),
-            //  cameraOBB.center,
-            //  otherOBB.center
-            //);
-            if (vec3.dot(toCamera, axis) < 0) vec3.negate(axis, axis);            const camToHead = vec3.sub(vec3.create(), playerHead, cameraOBB.center);
-            if (vec3.dot(axis, toHead) < -0.2) {
+                if (intersection) {
+                    collided = true;
+                    let { overlap, axis } = intersection;
+                    const toCamera = vec3.sub(vec3.create(), cameraOBB.center, otherOBB.center);
+                    const toHead = vec3.sub(vec3.create(), playerHead, cameraOBB.center);
+                    //const d = vec3.sub(
+                    //  vec3.create(),
+                    //  cameraOBB.center,
+                    //  otherOBB.center
+                    //);
+                    if (vec3.dot(toCamera, axis) < 0) vec3.negate(axis, axis); const camToHead = vec3.sub(vec3.create(), playerHead, cameraOBB.center);
+                    if (vec3.dot(axis, toHead) < -0.2) {
                         // This usually happens when the OBB center is more than 50% inside a thin floor/wall
                         vec3.negate(axis, axis);
+                    }
+
+                    // Push camera out of the object
+                    const pushOut = vec3.scale(vec3.create(), axis, overlap);
+                    vec3.add(transform.translation, transform.translation, pushOut);
+
+                    // Update cameraOBB position for next potential collision in same frame
+                    vec3.add(cameraOBB.center, cameraOBB.center, pushOut);
+                }
             }
-
-            // Push camera out of the object
-            const pushOut = vec3.scale(vec3.create(), axis, overlap);
-            vec3.add(transform.translation, transform.translation, pushOut);
-
-            // Update cameraOBB position for next potential collision in same frame
-            vec3.add(cameraOBB.center, cameraOBB.center, pushOut);
-          }
+            if (!collided) break;
         }
-        if (!collided) break;
-      }
     }
     intervalIntersection(min1, max1, min2, max2) {
         return !(min1 > max2 || min2 > max1);
@@ -318,26 +318,61 @@ export class Physics {
             }
 
             if (controller.keys['KeyE']) {
-                if(trigger.name === 'button'){
+                if (trigger.name === 'button.002') {
+                    const modal = document.getElementById('promptModal');
+                    const input = document.getElementById('promptInput');
+                    const submit = document.getElementById('promptSubmit');
+                    const cancel = document.getElementById('promptCancel');
+                    if (modal && input && submit && cancel) {
+                        modal.style.display = 'flex';
+                        try { document.exitPointerLock(); } catch (e) { }
+                        input.value = '';
+                        const cleanup = () => {
+                            modal.style.display = 'none';
+                            submit.removeEventListener('click', onSubmit);
+                            cancel.removeEventListener('click', onCancel);
+                            try {
+                                const canvas = document.querySelector('canvas');
+                                if (canvas) canvas.requestPointerLock();
+                            } catch (e) { }
+                        };
+                            const onSubmit = () => {
+                                const code = input.value.trim();
+                                if (code === '321') {
+                                    trigger.customProperties.isTrigger = false;
+                                    for (const entity of this.scene) {
+                                        if (entity.name === "Door1.002") {
+                                            entity.customProperties.used = true;
+                                            entity.customProperties.isStatic = false;
+                                        }
+                                    }
+                                    uiElement.style.display = 'none';
+                                }
+                                cleanup();
+                        };
+                        const onCancel = () => { cleanup(); };
+                        submit.addEventListener('click', onSubmit);
+                        cancel.addEventListener('click', onCancel);
+                    }
+                } else if (trigger.name === 'button') {
                     trigger.customProperties.isTrigger = false;
-                    console.log("Good job you pecked the button!");
-                } else if (trigger.name === 'button.001'){
+                    for (const entity of this.scene) {
+                        if (entity.name === "Door1") {
+                            entity.customProperties.used = true;
+                            entity.customProperties.isStatic = false;
+                        }
+                    }
+                } else if (trigger.name === 'button.001') {
                     trigger.customProperties.isTrigger = false;
-                    console.log("Good job you pecked the button.001!");
-                } else if (trigger.name === 'button.002'){
-                    trigger.customProperties.isTrigger = false;
-                    console.log("Good job you pecked the button.002!");
-                }else{
+                    for (const entity of this.scene) {
+                        if (entity.name === "Door1.001") {
+                            entity.customProperties.used = true;
+                            entity.customProperties.isStatic = false;
+                        }
+                    }
+                } else {
                     trigger.customProperties.used = true;
                     trigger.customProperties.isStatic = false;
-                    console.log("Good job you pecked the box and it vanished!");
-                }
-                uiElement.style.display = 'none';
-                for(const entity of this.scene){
-                    if(entity.name === "Door"){
-                        entity.customProperties.used = true;
-                        entity.customProperties.isStatic = false;
-                    }
                 }
             }
         }

@@ -57,7 +57,20 @@
                 <h2>Paused</h2>
                 <div id="pauseButtons">
                     <button id="btnResume">RESUME</button>
+                    </div>
                 </div>
+            </div>
+
+            <div id="promptModal" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center; background: rgba(0,0,0,0.5); z-index:1000;">
+                <div style="background:#fff; padding:20px; border-radius:8px; min-width:300px; box-shadow:0 6px 18px rgba(0,0,0,0.2);">
+                    <h3 style="margin-top:0">Enter code</h3>
+                    <input id="promptInput" type="text" style="width:100%; padding:8px; margin-bottom:12px; box-sizing:border-box;" />
+                    <div style="text-align:right">
+                        <button id="promptCancel" style="margin-right:8px;">Cancel</button>
+                        <button id="promptSubmit">Submit</button>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
 
