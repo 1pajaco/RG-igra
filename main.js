@@ -15,6 +15,7 @@ import {
 } from 'engine/core/MeshUtils.js';
 
 import { Physics } from './Physics.js';
+import { showObjective } from './Trigger.js';
 
 const canvas = document.querySelector('canvas');
 const renderer = new Renderer(canvas);
@@ -42,8 +43,8 @@ light00.addComponent(new Light({
     color: [255, 220, 200],
     intensity: 2.0,
     attenuation: [0.5, 0.2, 0.05],
-    innerConeAngle: 0.15, 
-    outerConeAngle: 0.3, 
+    innerConeAngle: 0.15,
+    outerConeAngle: 0.3,
 }));
 light00.name = "chickenLight";
 scene.push(light00);
@@ -51,9 +52,9 @@ chickenEntity.addComponent(new ThirdPersonController(chickenEntity, camera, canv
 
 const physics = new Physics(scene);
 // // // izpis objektov
-for (const entity of scene) {
-    console.log(entity);
-}
+// for (const entity of scene) {
+//     console.log(entity);
+// }
 
 for (const entity of scene) {
     const model = entity.getComponentOfType(Model);
@@ -77,8 +78,7 @@ const instructions = document.getElementById('instructions');
 const overlay = document.getElementById('frontPageSquare');
 const options = document.getElementById('options');
 
-window.gameStarted = false; // comment when working and in css
-// window.gameStarted = true; // comment when presenting and in css
+window.gameStarted = false;
 
 document.getElementById('btnInstructions').onclick = () => {
     startScreen.classList.add('hidden');
@@ -104,6 +104,9 @@ document.getElementById('btnStart').onclick = () => {
     overlay.classList.add('hidden');
     window.gameStarted = true;
     canvas.requestPointerLock();
+    const obj = document.getElementById('objectiveText');
+    obj.style.display = 'block';
+    showObjective();
 };
 
 const blurCheckbox = document.getElementById('blurCheckbox');
@@ -152,9 +155,11 @@ if (btnResume) {
             overlay.style.display = 'none';
             overlay.classList.add('hidden');
         }
-        // Resume the game
         window.gameStarted = true;
-        try { canvas.requestPointerLock(); } catch (e) { }
+        canvas.requestPointerLock();
+        const obj = document.getElementById('objectiveText');
+        obj.style.display = 'block';
+        showObjective();
     });
 }
 

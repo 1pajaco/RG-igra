@@ -3,6 +3,7 @@ import { getGlobalModelMatrix } from 'engine/core/SceneUtils.js';
 import { Transform, Parent } from 'engine/core/core.js';
 import { ThirdPersonController } from './engine/controllers/ThirdPersonController.js';
 import { isTriggerRecursive } from './engine/core/SceneUtils.js';
+import { checkTrigger } from './Trigger.js';
 export class Physics {
 
     constructor(scene) {
@@ -32,7 +33,7 @@ export class Physics {
                     if (entity === other) continue;
 
                     if (isTriggerRecursive(other)) {
-                        this.checkTrigger(entity, other, controller, uiElement);
+                        checkTrigger(this, entity, other, controller, uiElement);
                     }
                     if (other.customProperties?.isStatic) {
                         this.resolveCollisionOBB(entity, other, controller);
@@ -303,81 +304,4 @@ export class Physics {
 
         vec3.add(transform.translation, transform.translation, minDirection);
     }
-
-    checkTrigger(player, trigger, controller, uiElement) {
-        const playerBox = this.getTransformedAABB(player);
-        const triggerBox = this.getTransformedAABB(trigger);
-
-        const isColliding = this.aabbIntersection(playerBox, triggerBox);
-        if (!isColliding) {
-            return
-        }
-        if (!trigger.customProperties.used) {
-            if (uiElement) {
-                uiElement.style.display = 'block';
-            }
-
-            if (controller.keys['KeyE']) {
-                if (trigger.name === 'button.002') {
-                    const modal = document.getElementById('promptModal');
-                    const input = document.getElementById('promptInput');
-                    const submit = document.getElementById('promptSubmit');
-                    const cancel = document.getElementById('promptCancel');
-                    if (modal && input && submit && cancel) {
-                        modal.style.display = 'flex';
-                        try { document.exitPointerLock(); } catch (e) { }
-                        input.value = '';
-                        const cleanup = () => {
-                            modal.style.display = 'none';
-                            submit.removeEventListener('click', onSubmit);
-                            cancel.removeEventListener('click', onCancel);
-                            try {
-                                const canvas = document.querySelector('canvas');
-                                if (canvas) canvas.requestPointerLock();
-                            } catch (e) { }
-                        };
-                            const onSubmit = () => {
-                                const code = input.value.trim();
-                                if (code === '321') {
-                                    trigger.customProperties.isTrigger = false;
-                                    for (const entity of this.scene) {
-                                        if (entity.name === "Door1.002") {
-                                            entity.customProperties.used = true;
-                                            entity.customProperties.isStatic = false;
-                                        }
-                                    }
-                                    uiElement.style.display = 'none';
-                                }
-                                cleanup();
-                        };
-                        const onCancel = () => { cleanup(); };
-                        submit.addEventListener('click', onSubmit);
-                        cancel.addEventListener('click', onCancel);
-                    }
-                } else if (trigger.name === 'button') {
-                    trigger.customProperties.isTrigger = false;
-                    for (const entity of this.scene) {
-                        if (entity.name === "Door1") {
-                            entity.customProperties.used = true;
-                            entity.customProperties.isStatic = false;
-                        }
-                    }
-                } else if (trigger.name === 'button.001') {
-                    trigger.customProperties.isTrigger = false;
-                    for (const entity of this.scene) {
-                        if (entity.name === "Door1.001") {
-                            entity.customProperties.used = true;
-                            entity.customProperties.isStatic = false;
-                        }
-                    }
-                } else {
-                    trigger.customProperties.used = true;
-                    trigger.customProperties.isStatic = false;
-                }
-            }
-        }
-
-
-    }
-
 }
