@@ -7,7 +7,7 @@ import { Light } from './engine/core/Light.js';
 
 import { ThirdPersonController } from './engine/controllers/ThirdPersonController.js';
 
-import { Camera, Model, Entity, Transform, Primitive, Material, Texture, Sampler } from 'engine/core/core.js';
+import { Camera, Model, Entity, Transform } from 'engine/core/core.js';
 
 import {
     calculateAxisAlignedBoundingBox,
@@ -16,7 +16,7 @@ import {
 
 import { Physics } from './Physics.js';
 import { showObjective } from './Trigger.js';
-import { vec3, mat4, quat } from 'glm';
+import { vec3, quat } from 'glm';
 
 const canvas = document.querySelector('canvas');
 const renderer = new Renderer(canvas);

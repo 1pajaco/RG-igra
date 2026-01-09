@@ -45,8 +45,8 @@ export class ThirdPersonController {
         this.onGround = false;
         this.verticalVelocity = 0;
 
-    this.initHandlers();
-    this.lightEntity = lightEntity;
+        this.initHandlers();
+        this.lightEntity = lightEntity;
     }
 
     initHandlers() {
@@ -74,13 +74,11 @@ export class ThirdPersonController {
         const currentYaw = this.yaw + this.initialYawOffset;
         const entityYaw = currentYaw + Math.PI;
 
-        // Calculate forward and right vectors.
         const cos = Math.cos(currentYaw);
         const sin = Math.sin(currentYaw);
         const forward = [-sin, 0, -cos];
         const right = [cos, 0, -sin];
 
-        // Map user input to the acceleration vector.
         const acc = vec3.create();
         if (this.keys['KeyW']) {
             vec3.add(acc, acc, forward);
@@ -108,7 +106,6 @@ export class ThirdPersonController {
             this.acceleration = this.accelerationWalk;
         }
 
-        // Update velocity based on acceleration.
         vec3.scaleAndAdd(this.velocity, this.velocity, acc, dt * this.acceleration);
 
         // If there is no user input, apply decay.
@@ -130,33 +127,29 @@ export class ThirdPersonController {
 
         const transformEntity = this.entity.getComponentOfType(Transform);
         const transformCamera = this.camera.getComponentOfType(Transform);
-        if (transformEntity && transformCamera) {
-            // Update translation based on velocity.
-            vec3.scaleAndAdd(transformEntity.translation,
-                transformEntity.translation, this.velocity, dt);
+        // Update translation based on velocity.
+        vec3.scaleAndAdd(transformEntity.translation,
+            transformEntity.translation, this.velocity, dt);
 
-            if (!this.onGround) {
-                transformEntity.translation[1] = transformEntity.translation[1] + (this.verticalVelocity * dt);
-            }
-
-            // Update rotation based on the Euler angles.
-            const entityRotation = quat.create();
-            quat.rotateY(entityRotation, entityRotation, entityYaw);
-            // quat.rotateX(entityRotation, entityRotation, -this.pitch);
-
-            const cameraRotation = quat.create();
-            quat.rotateY(cameraRotation, cameraRotation, currentYaw);
-            quat.rotateX(cameraRotation, cameraRotation, this.pitch + this.pitchOffset);
-
-            transformEntity.rotation = entityRotation;
-
-            const entityModelMatrix = mat4.fromRotationTranslation(mat4.create(), cameraRotation, transformEntity.translation);
-            const cameraPosition = vec3.clone(this.cameraOffset);
-            vec3.transformMat4(cameraPosition, cameraPosition, entityModelMatrix);
-
-            transformCamera.translation = cameraPosition;
-            transformCamera.rotation = cameraRotation;
+        if (!this.onGround) {
+            transformEntity.translation[1] = transformEntity.translation[1] + (this.verticalVelocity * dt);
         }
+
+        const entityRotation = quat.create();
+        quat.rotateY(entityRotation, entityRotation, entityYaw);
+
+        const cameraRotation = quat.create();
+        quat.rotateY(cameraRotation, cameraRotation, currentYaw);
+        quat.rotateX(cameraRotation, cameraRotation, this.pitch + this.pitchOffset);
+
+        transformEntity.rotation = entityRotation;
+
+        const entityModelMatrix = mat4.fromRotationTranslation(mat4.create(), cameraRotation, transformEntity.translation);
+        const cameraPosition = vec3.clone(this.cameraOffset);
+        vec3.transformMat4(cameraPosition, cameraPosition, entityModelMatrix);
+
+        transformCamera.translation = cameraPosition;
+        transformCamera.rotation = cameraRotation;
     }
 
     pointermoveHandler(e) {

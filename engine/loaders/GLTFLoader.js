@@ -49,8 +49,6 @@ export class GLTFLoader {
         return this;
     }
 
-    // Finds an object in list at the given index, or if the 'name'
-    // property matches the given name.
     findByNameOrIndex(list, nameOrIndex) {
         if (typeof nameOrIndex === 'number') {
             return list[nameOrIndex];
@@ -266,7 +264,6 @@ export class GLTFLoader {
         }
 
         if (gltfSpec.bufferView === undefined) {
-            console.warn('Accessor does not reference a buffer view');
             return null;
         }
 
@@ -340,12 +337,10 @@ export class GLTFLoader {
 
     createMeshFromPrimitive(spec) {
         if (spec.attributes.POSITION === undefined) {
-            console.warn('No position in mesh');
             return new Mesh();
         }
 
         if (spec.indices === undefined) {
-            console.warn('No indices in mesh');
             return new Mesh();
         }
 
@@ -396,7 +391,6 @@ export class GLTFLoader {
         const primitives = [];
         for (const primitiveSpec of gltfSpec.primitives) {
             if (primitiveSpec.mode !== 4 && primitiveSpec.mode !== undefined) {
-                console.warn(`GLTFLoader: skipping primitive with mode ${primitiveSpec.mode}`);
                 continue;
             }
 
