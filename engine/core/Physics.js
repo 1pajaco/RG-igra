@@ -1,8 +1,8 @@
 import { vec3, mat4 } from 'glm';
 import { getGlobalModelMatrix } from 'engine/core/SceneUtils.js';
 import { Transform, Parent } from 'engine/core/core.js';
-import { ThirdPersonController } from './engine/controllers/ThirdPersonController.js';
-import { isTriggerRecursive } from './engine/core/SceneUtils.js';
+import { ThirdPersonController } from '../controllers/ThirdPersonController.js';
+import { isTriggerRecursive } from './SceneUtils.js';
 import { checkTrigger } from './Trigger.js';
 export class Physics {
 
