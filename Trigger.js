@@ -33,7 +33,7 @@ export function checkTrigger(physics, player, trigger, controller, uiElement) {
             }
         }
         const content = document.getElementById('objectiveContent');
-        content.textContent = 'Fredoom?';
+        content.textContent = 'Freedom?';
         flashEl = document.getElementById('flashMessage');
         flashEl.textContent = 'You Win?';
         flashEl.style.display = 'block';
