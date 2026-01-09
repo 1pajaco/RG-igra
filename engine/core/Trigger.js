@@ -89,7 +89,7 @@ export function checkTrigger(physics, player, trigger, controller, uiElement) {
                 objective = document.getElementById('objectiveText');
 
                 const content = document.getElementById('objectiveContent');
-                content.textContent = 'Find the next button and the second part of the code';
+                content.textContent = 'Find the next button and the second part of the code.';
             } else if (trigger.name === 'button.001') {
                 trigger.customProperties.isTrigger = false;
                 for (const entity of physics.scene) {

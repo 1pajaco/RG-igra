@@ -14,8 +14,8 @@ import {
     mergeAxisAlignedBoundingBoxes,
 } from 'engine/core/MeshUtils.js';
 
-import { Physics } from './Physics.js';
-import { showObjective } from './Trigger.js';
+import { Physics } from './engine/core/Physics.js';
+import { showObjective } from './engine/core/Trigger.js';
 import { vec3, quat } from 'glm';
 
 const canvas = document.querySelector('canvas');
@@ -23,7 +23,7 @@ const renderer = new Renderer(canvas);
 await renderer.initialize();
 
 const loader = new GLTFLoader();
-await loader.load(new URL('./scena1/scene.gltf', import.meta.url));
+await loader.load(new URL('./scena/scene.gltf', import.meta.url));
 
 const scene = loader.loadScene();
 const camera = loader.loadNode('Camera');
