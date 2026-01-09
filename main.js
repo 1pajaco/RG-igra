@@ -16,6 +16,7 @@ import {
 
 import { Physics } from './Physics.js';
 import { showObjective } from './Trigger.js';
+import { vec3, mat4, quat } from 'glm';
 
 const canvas = document.querySelector('canvas');
 const renderer = new Renderer(canvas);
@@ -108,18 +109,18 @@ document.getElementById('btnStart').onclick = () => {
     obj.style.display = 'block';
     showObjective();
 };
-const effects = ['blur','vignette'];
+const effects = ['blur', 'vignette'];
 
 effects.forEach(effect => {
     const checkbox = document.getElementById(`${effect}Checkbox`);
-    if(checkbox){ 
-    checkbox.addEventListener('change', (e) => {
-        const enabled = !!e.target.checked;
-        if (renderer && typeof renderer.setEffect === 'function') {
-            renderer.setEffect(effect, enabled);
-        }
-    
-    });
+    if (checkbox) {
+        checkbox.addEventListener('change', (e) => {
+            const enabled = !!e.target.checked;
+            if (renderer && typeof renderer.setEffect === 'function') {
+                renderer.setEffect(effect, enabled);
+            }
+
+        });
     }
 });
 
@@ -155,27 +156,25 @@ function update(time, dt) {
     }
     physics.update(time, dt);
 
-    const playerTransform = chickenEntity.getComponentOfType(Transform);
-    if (playerTransform) {
-        lightTransform.rotation = playerTransform.rotation.slice();
-    }
+    const playerTransform = chickenEntity.getComponentOfType(Transform)
+    const cameraTransform = chickenEntity.getComponentOfType(ThirdPersonController).camera.getComponentOfType(Transform)
+
+    const camForward = vec3.transformQuat(vec3.create(), [0, 0, -1], cameraTransform.rotation);
+    const q = quat.rotationTo(quat.create(), [0, 0, 1], camForward);
+    lightTransform.rotation = q.slice();
 }
 
 const btnResume = document.getElementById('btnResume');
-if (btnResume) {
-    btnResume.addEventListener('click', () => {
-        const overlay = document.getElementById('pauseOverlay');
-        if (overlay) {
-            overlay.style.display = 'none';
-            overlay.classList.add('hidden');
-        }
-        window.gameStarted = true;
-        canvas.requestPointerLock();
-        const obj = document.getElementById('objectiveText');
-        obj.style.display = 'block';
-        showObjective();
-    });
-}
+btnResume.addEventListener('click', () => {
+    const overlay = document.getElementById('pauseOverlay');
+    overlay.style.display = 'none';
+    overlay.classList.add('hidden');
+    window.gameStarted = true;
+    canvas.requestPointerLock();
+    const obj = document.getElementById('objectiveText');
+    obj.style.display = 'block';
+    showObjective();
+});
 
 function render() {
     renderer.render(scene, camera);
@@ -184,9 +183,7 @@ function render() {
 // Resize in sistemi ostanejo zunaj, da se canvas pravilno prilagodi takoj ob nalaganju
 function resize({ displaySize: { width, height } }) {
     const camComponent = camera.getComponentOfType(Camera);
-    if (camComponent) {
-        camComponent.aspect = width / height;
-    }
+    camComponent.aspect = width / height;
 }
 
 new ResizeSystem({ canvas, resize }).start();
