@@ -108,6 +108,20 @@ document.getElementById('btnStart').onclick = () => {
     obj.style.display = 'block';
     showObjective();
 };
+const effects = ['blur','vignette'];
+
+effects.forEach(effect => {
+    const checkbox = document.getElementById(`${effect}Checkbox`);
+    if(checkbox){ 
+    checkbox.addEventListener('change', (e) => {
+        const enabled = !!e.target.checked;
+        if (renderer && typeof renderer.setEffect === 'function') {
+            renderer.setEffect(effect, enabled);
+        }
+    
+    });
+    }
+});
 
 const blurCheckbox = document.getElementById('blurCheckbox');
 if (blurCheckbox) {
