@@ -13,8 +13,8 @@ fn vertex(@builtin(vertex_index) vertexIndex : u32) -> VertexOutput {
     // A standard trick to create a full-screen triangle from 3 vertices
     var pos = array<vec2f, 3>(
         vec2f(-1.0, -1.0), // Bottom left
-        vec2f( 3.0, -1.0), // Bottom right (far out)
-        vec2f(-1.0,  3.0)  // Top left (far up)
+        vec2f( 3.0, -1.0), // Bottom right
+        vec2f(-1.0,  3.0)  // Top left
     );
 
     output.position = vec4f(pos[vertexIndex], 0.0, 1.0);
@@ -36,11 +36,8 @@ fn fragment(input: VertexOutput) -> @location(0) vec4f {
     
     var color = vec3f(0.0);
     
-    // A simple 9-sample "Box Blur"
-    // We average the center pixel + 8 neighbors
     let count = 9.0;
     
-    // Offsets for 3x3 grid
     let offsets = array<vec2f, 9>(
         vec2f(-1, -1), vec2f(0, -1), vec2f(1, -1),
         vec2f(-1,  0), vec2f(0,  0), vec2f(1,  0),
@@ -48,7 +45,7 @@ fn fragment(input: VertexOutput) -> @location(0) vec4f {
     );
 
     for (var i = 0; i < 9; i++) {
-        let sampleUV = input.texcoords + offsets[i] * pixelSize * 2.0; // *2.0 makes the blur stronger
+        let sampleUV = input.texcoords + offsets[i] * pixelSize * 2.0;
         color += textureSample(screenTexture, screenSampler, sampleUV).rgb;
     }
 
