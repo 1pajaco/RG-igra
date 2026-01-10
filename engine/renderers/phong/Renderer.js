@@ -117,6 +117,7 @@ export class Renderer extends BaseRenderer {
     this.perFragment = true;
     this.postProcessBlur = false;
     this.effectsState = {
+      bloom: 0,
       blur: 0,
       vignette: 0,
     };
@@ -153,6 +154,13 @@ export class Renderer extends BaseRenderer {
     const codeVignette = await fetch(
       "./engine/renderers/phong/vignette.wgsl"
     ).then((r) => r.text());
+    const codeExtract = await fetch(
+      './engine/renderers/phong/bloomExtract.wgsl'
+    ).then(r => r.text());
+    const codeCombine = await fetch(
+      './engine/renderers/phong/bloomCombine.wgsl'
+    ).then(r => r.text());
+
 
     const modulePerFragment = this.device.createShaderModule({
       code: codePerFragment,
@@ -165,6 +173,12 @@ export class Renderer extends BaseRenderer {
     });
     const moduleVignette = this.device.createShaderModule({
       code: codeVignette,
+    });
+    const moduleExtract = this.device.createShaderModule({
+       code: codeExtract 
+    });
+    const moduleCombine = this.device.createShaderModule({
+       code: codeCombine 
     });
 
     this.cameraBindGroupLayout = this.device.createBindGroupLayout(
@@ -244,6 +258,24 @@ export class Renderer extends BaseRenderer {
         targets: [{ format: this.format }],
       },
     });
+    this.pipelineBloomExtract = await this.device.createRenderPipelineAsync({
+        layout: postProcessLayout, // Standard layout (1 tex)
+        vertex: { module: moduleExtract, entryPoint: 'vertex' },
+        fragment: { module: moduleExtract, entryPoint: 'fragment', targets: [{ format: this.format }] },
+    });
+    this.combineBindGroupLayout = this.device.createBindGroupLayout({
+        entries: [
+            { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: {} }, // Scene
+            { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: {} }, // Glow
+            { binding: 2, visibility: GPUShaderStage.FRAGMENT, sampler: {} },
+        ]
+    });
+
+    this.pipelineBloomCombine = await this.device.createRenderPipelineAsync({
+        layout: this.device.createPipelineLayout({ bindGroupLayouts: [this.combineBindGroupLayout] }),
+        vertex: { module: moduleCombine, entryPoint: 'vertex' },
+        fragment: { module: moduleCombine, entryPoint: 'fragment', targets: [{ format: this.format }] },
+    });
 
     // POST-PROCESS: Create a sampler for reading the scene texture
     this.postProcessSampler = this.device.createSampler({
@@ -291,6 +323,12 @@ export class Renderer extends BaseRenderer {
     });
     this.intermediateTexture?.destroy();
     this.intermediateTexture = this.device.createTexture({
+        format: this.format,
+        size: [this.canvas.width, this.canvas.height],
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+    });
+    this.bloomTexture?.destroy();
+    this.bloomTexture = this.device.createTexture({
         format: this.format,
         size: [this.canvas.width, this.canvas.height],
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
@@ -414,6 +452,7 @@ export class Renderer extends BaseRenderer {
     }
 
     const encoder = this.device.createCommandEncoder();
+    const bloomOn = this.effectsState.bloom === 1;
     const blurOn = this.effectsState.blur === 1;
     const vignetteOn = this.effectsState.vignette === 1;
     const usePostProcess = blurOn || vignetteOn;
@@ -538,6 +577,53 @@ export class Renderer extends BaseRenderer {
     scenePass.end();
     if (usePostProcess) {
         let currentInputView = this.sceneTexture.createView();
+        if(bloomOn){
+          const extractPass = encoder.beginRenderPass({
+                colorAttachments: [{ view: this.bloomTexture.createView(), loadOp: 'clear', storeOp: 'store' }]
+            });
+            extractPass.setPipeline(this.pipelineBloomExtract);
+            extractPass.setBindGroup(0, this.device.createBindGroup({
+                layout: this.postProcessBindGroupLayout,
+                entries: [{ binding: 0, resource: currentInputView }, { binding: 1, resource: this.postProcessSampler }]
+            }));
+            extractPass.draw(3);
+            extractPass.end();
+
+            // B. BLUR: BloomTexture -> IntermediateTexture
+            // We reuse your existing blur pipeline!
+            const blurPass = encoder.beginRenderPass({
+                colorAttachments: [{ view: this.intermediateTexture.createView(), loadOp: 'clear', storeOp: 'store' }]
+            });
+            blurPass.setPipeline(this.pipelinePostProcess); 
+            blurPass.setBindGroup(0, this.device.createBindGroup({
+                layout: this.postProcessBindGroupLayout,
+                entries: [{ binding: 0, resource: this.bloomTexture.createView() }, { binding: 1, resource: this.postProcessSampler }]
+            }));
+            blurPass.draw(3);
+            blurPass.end();
+
+            // C. COMBINE: Scene + Intermediate -> Output
+            // Logic: If Vignette is next, write to BloomTexture (reuse it). If not, write to Screen.
+            const combineTarget = vignetteOn ? this.bloomTexture.createView() : this.context.getCurrentTexture().createView();
+            
+            const combinePass = encoder.beginRenderPass({
+                colorAttachments: [{ view: combineTarget, loadOp: 'clear', storeOp: 'store' }]
+            });
+            combinePass.setPipeline(this.pipelineBloomCombine);
+            combinePass.setBindGroup(0, this.device.createBindGroup({
+                layout: this.combineBindGroupLayout,
+                entries: [
+                    { binding: 0, resource: this.sceneTexture.createView() },      // Original Scene
+                    { binding: 1, resource: this.intermediateTexture.createView() }, // The Glow
+                    { binding: 2, resource: this.postProcessSampler }
+                ]
+            }));
+            combinePass.draw(3);
+            combinePass.end();
+
+            // Update Current Input: The "image" is now the combined Bloom result
+            if (vignetteOn) currentInputView = this.bloomTexture.createView();
+        }
         if(blurOn){
             const targetView = vignetteOn 
                 ? this.intermediateTexture.createView() 
@@ -563,24 +649,16 @@ export class Renderer extends BaseRenderer {
             currentInputView = this.intermediateTexture.createView();
         }
         if(vignetteOn){
-            const targetView = this.context.getCurrentTexture().createView();
-
             const vigPass = encoder.beginRenderPass({
-                colorAttachments: [{ view: targetView, loadOp: 'clear', storeOp: 'store', clearValue: [0,0,0,1] }]
+                colorAttachments: [{ view: this.context.getCurrentTexture().createView(), loadOp: 'clear', storeOp: 'store' }]
             });
-
             vigPass.setPipeline(this.pipelineVignette);
-            const bg = this.device.createBindGroup({
+            vigPass.setBindGroup(0, this.device.createBindGroup({
                 layout: this.postProcessBindGroupLayout,
-                entries: [
-                    { binding: 0, resource: currentInputView },
-                    { binding: 1, resource: this.postProcessSampler },
-                ]
-            });
-            vigPass.setBindGroup(0, bg);
+                entries: [{ binding: 0, resource: currentInputView }, { binding: 1, resource: this.postProcessSampler }]
+            }));
             vigPass.draw(3);
             vigPass.end();
-        
         }
     }
     this.device.queue.submit([encoder.finish()]);

@@ -109,7 +109,7 @@ document.getElementById('btnStart').onclick = () => {
     obj.style.display = 'block';
     showObjective();
 };
-const effects = ['blur', 'vignette'];
+const effects = ['blur', 'vignette', 'bloom'];
 
 effects.forEach(effect => {
     const checkbox = document.getElementById(`${effect}Checkbox`);
