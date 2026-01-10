@@ -31,23 +31,14 @@ fn vertex(@builtin(vertex_index) vertexIndex : u32) -> VertexOutput {
 @fragment
 fn fragment(input: VertexOutput) -> @location(0) vec4f {
     let dims = vec2f(textureDimensions(screenTexture));
-    // Calculate size of one pixel (texel)
     let pixelSize = 1.0 / dims; 
-    
-    var color = vec3f(0.0);
-    
-    let count = 9.0;
-    
-    let offsets = array<vec2f, 9>(
-        vec2f(-1, -1), vec2f(0, -1), vec2f(1, -1),
-        vec2f(-1,  0), vec2f(0,  0), vec2f(1,  0),
-        vec2f(-1,  1), vec2f(0,  1), vec2f(1,  1)
-    );
+    var blurColor = vec3f(0.0);
 
-    for (var i = 0; i < 9; i++) {
-        let sampleUV = input.texcoords + offsets[i] * pixelSize * 2.0;
-        color += textureSample(screenTexture, screenSampler, sampleUV).rgb;
+    for (var i = -2.0; i <= 2.0; i += 1.0) {
+        for (var j = -2.0; j <= 2.0; j += 1.0) {
+            let offset = vec2f(i, j) * pixelSize;
+            blurColor += textureSample(screenTexture, screenSampler, input.texcoords + offset).rgb;
+        }
     }
-
-    return vec4f(color / count, 1.0);
+    return vec4f(blurColor / 20.0, 1.0);
 }
