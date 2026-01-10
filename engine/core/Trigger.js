@@ -15,10 +15,10 @@ function showFlash(text, duration) {
 }
 
 export function checkTrigger(physics, player, trigger, controller, uiElement) {
-    const playerBox = physics.getTransformedAABB(player);
-    const triggerBox = physics.getTransformedAABB(trigger);
+    const playerOBB = physics.getOBB(player);
+    const triggerOBB = physics.getOBB(trigger);
 
-    const isColliding = physics.aabbIntersection(playerBox, triggerBox);
+    const isColliding = physics.obbIntersection(playerOBB, triggerOBB);
     if (!isColliding) {
         return;
     }
