@@ -148,8 +148,8 @@ export class Renderer extends BaseRenderer {
     const codePerVertex = await fetch(
       "./engine/renderers/phong/phongPerVertex.wgsl"
     ).then((response) => response.text());
-    const codePostProcess = await fetch(
-      "./engine/renderers/phong/postprocess.wgsl"
+    const blurPostProcess = await fetch(
+      "./engine/renderers/phong/blur.wgsl"
     ).then((response) => response.text());
     const codeVignette = await fetch(
       "./engine/renderers/phong/vignette.wgsl"
@@ -168,8 +168,8 @@ export class Renderer extends BaseRenderer {
     const modulePerVertex = this.device.createShaderModule({
       code: codePerVertex,
     });
-    const modulePostProcess = this.device.createShaderModule({
-      code: codePostProcess,
+    const moduleBlur = this.device.createShaderModule({
+      code: blurPostProcess,
     });
     const moduleVignette = this.device.createShaderModule({
       code: codeVignette,
@@ -240,11 +240,11 @@ export class Renderer extends BaseRenderer {
     const postProcessLayout = this.device.createPipelineLayout({
       bindGroupLayouts: [this.postProcessBindGroupLayout],
     });
-    this.pipelinePostProcess = await this.device.createRenderPipelineAsync({
+    this.pipelineBlur = await this.device.createRenderPipelineAsync({
       layout: postProcessLayout,
-      vertex: { module: modulePostProcess, entryPoint: "vertex" },
+      vertex: { module: moduleBlur, entryPoint: "vertex" },
       fragment: {
-        module: modulePostProcess,
+        module: moduleBlur,
         entryPoint: "fragment",
         targets: [{ format: this.format }],
       },
@@ -594,7 +594,7 @@ export class Renderer extends BaseRenderer {
             const blurPass = encoder.beginRenderPass({
                 colorAttachments: [{ view: this.intermediateTexture.createView(), loadOp: 'clear', storeOp: 'store' }]
             });
-            blurPass.setPipeline(this.pipelinePostProcess); 
+            blurPass.setPipeline(this.pipelineBlur); 
             blurPass.setBindGroup(0, this.device.createBindGroup({
                 layout: this.postProcessBindGroupLayout,
                 entries: [{ binding: 0, resource: this.bloomTexture.createView() }, { binding: 1, resource: this.postProcessSampler }]
@@ -633,7 +633,7 @@ export class Renderer extends BaseRenderer {
                 colorAttachments: [{ view: targetView, loadOp: 'clear', storeOp: 'store', clearValue: [0,0,0,1] }]
             });
             
-            blurPass.setPipeline(this.pipelinePostProcess); 
+            blurPass.setPipeline(this.pipelineBlur); 
             const bg = this.device.createBindGroup({
                 layout: this.postProcessBindGroupLayout,
                 entries: [
