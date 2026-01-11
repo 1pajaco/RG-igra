@@ -156,7 +156,6 @@ function update(time, dt) {
     }
     physics.update(time, dt);
 
-    const playerTransform = chickenEntity.getComponentOfType(Transform)
     const cameraTransform = chickenEntity.getComponentOfType(ThirdPersonController).camera.getComponentOfType(Transform)
 
     const camForward = vec3.transformQuat(vec3.create(), [0, 0, -1], cameraTransform.rotation);

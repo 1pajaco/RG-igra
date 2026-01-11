@@ -478,23 +478,6 @@ export class Renderer extends BaseRenderer {
     scenePass.setPipeline(
       this.perFragment ? this.pipelinePerFragment : this.pipelinePerVertex
     );
-    //this.renderPass = encoder.beginRenderPass({
-    //    colorAttachments: [
-    //        {
-    //            view: this.context.getCurrentTexture(),
-    //            clearValue: [1, 1, 1, 1],
-    //            loadOp: 'clear',
-    //            storeOp: 'store',
-    //        }
-    //    ],
-    //    depthStencilAttachment: {
-    //        view: this.depthTexture,
-    //        depthClearValue: 1,
-    //        depthLoadOp: 'clear',
-    //        depthStoreOp: 'discard',
-    //    },
-    //});
-    //this.renderPass.setPipeline(this.perFragment ? this.pipelinePerFragment : this.pipelinePerVertex);
 
     const cameraComponent = camera.getComponentOfType(Camera);
     const viewMatrix = getGlobalViewMatrix(camera);
